@@ -81,6 +81,7 @@ body:not(.authenticated) .wrap{display:none}body.authenticated #loginPanel{displ
 <body>
 <section id="loginPanel" aria-live="polite">
   <h2>Foundry Department Login</h2>
+  <p class="sub">Sign in with the Foundry department account to view and update the dashboard.</p>
   <form id="loginForm">
     <label class="f">Email address<input id="loginEmail" type="email" autocomplete="username" required placeholder="Foundry account email"></label>
     <label class="f">Password<input id="loginPassword" type="password" autocomplete="current-password" required placeholder="Password"></label>
@@ -307,6 +308,22 @@ function render(){
     return `<tr class="${s}"><td class="id">${esc(t.id)}</td><td>${esc(t.t)}</td><td>${esc(t.o||"Unassigned")}</td><td class="mini">${fmt(t.s)} – ${fmt(t.f)}</td><td>${plan(t,d)}%</td><td class="pc"><input type="number" min="0" max="100" step="5" value="${P(t)}" data-id="${esc(t.id)}" aria-label="Percent complete for task ${esc(t.id)}"> <button data-done="${esc(t.id)}" title="Mark 100%">✓</button></td><td><span class="tag ${s}">${ST[s][0]}</span></td><td class="notes-cell">${late?'<span class="mini">Due / overdue — record reason and recovery action</span>':'<span class="mini">Optional delay / recovery notes</span>'}<textarea data-note-id="${esc(t.id)}" data-note="reason" placeholder="Why is this task late?">${esc(nt.reason||"")}</textarea><textarea data-note-id="${esc(t.id)}" data-note="action" placeholder="Recovery action / measures to catch up">${esc(nt.action||"")}</textarea></td><td><button class="task-delete" data-delete-task="${esc(t.id)}">Delete task</button></td></tr>`}).join("")||'<tr><td colspan="9" class="empty">No tasks match these filters.</td></tr>';
 }
 window.exportFoundryState=()=>({version:1,progress:pct,tasks:T,owners,delayNotes,updatedAt:new Date().toISOString()});
+// Firebase Realtime Database forbids ., #, $, /, [, and ] in object keys.
+// Keep original task IDs (e.g. "1.1") in the dashboard and encode only cloud object keys.
+window.foundryToCloudSafe = (data) => {
+  const out = structuredClone(data);
+  const encodeTaskMap = (map) => Object.fromEntries(Object.entries(map || {}).map(([key, value]) => [key.replaceAll('.', '_'), value]));
+  out.progress = encodeTaskMap(out.progress);
+  out.delayNotes = encodeTaskMap(out.delayNotes);
+  return out;
+};
+window.foundryFromCloudSafe = (data) => {
+  const out = structuredClone(data || {});
+  const decodeTaskMap = (map) => Object.fromEntries(Object.entries(map || {}).map(([key, value]) => [key.replaceAll('_', '.'), value]));
+  out.progress = decodeTaskMap(out.progress);
+  out.delayNotes = decodeTaskMap(out.delayNotes);
+  return out;
+};
 window.importFoundryState=(data)=>{
   if(data&&typeof data==="object"){
     if(data.progress&&typeof data.progress==="object")pct=data.progress;
@@ -364,7 +381,7 @@ window.queueFoundryCloudSave = () => {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
     try {
-      await set(foundryRef, window.exportFoundryState());
+      await set(foundryRef, window.foundryToCloudSafe(window.exportFoundryState()));
       cloudStatus.textContent = "Firebase: saved online";
     } catch (err) {
       cloudStatus.textContent = "Firebase save failed: " + (err?.message || "check database rules");
@@ -398,10 +415,10 @@ onAuthStateChanged(auth, async (user) => {
   try {
     const snapshot = await get(foundryRef);
     if (snapshot.exists()) {
-      window.importFoundryState(snapshot.val());
+      window.importFoundryState(window.foundryFromCloudSafe(snapshot.val()));
     } else {
       // First login: upload this browser's existing dashboard state to the cloud.
-      await set(foundryRef, window.exportFoundryState());
+      await set(foundryRef, window.foundryToCloudSafe(window.exportFoundryState()));
     }
     cloudReady = true;
     document.body.classList.add("authenticated");
