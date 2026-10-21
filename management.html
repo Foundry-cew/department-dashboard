@@ -16,5 +16,22 @@ function goalGroups(data){const tasks=normalizeData(data);const groups=new Map()
 function summarize(data){const goals=goalGroups(data);return {goals,total:goals.length,done:goals.filter(g=>g.progress>=100).length,avg:goals.length?Math.round(goals.reduce((s,g)=>s+g.progress,0)/goals.length):0,hasData:goals.length>0}}
 $('loginForm').addEventListener('submit',async e=>{e.preventDefault();$('loginBtn').disabled=true;$('loginStatus').textContent='Signing in…';try{const c=await signInWithEmailAndPassword(auth,$('email').value.trim(),$('password').value);if(c.user.uid!==MANAGEMENT_UID){await signOut(auth);throw new Error('This account is not authorized for Management review.')}$('loginPanel').style.display='none';$('dashboard').style.display='block';await loadData()}catch(err){$('loginStatus').textContent=err.message==='This account is not authorized for Management review.'?err.message:(err.code==='auth/invalid-credential'?'Email or password is incorrect.':'Sign-in failed. Check the credentials and try again.')}finally{$('loginBtn').disabled=false}});
 async function loadData(){if(auth.currentUser?.uid!==MANAGEMENT_UID)return;$('dbStatus').textContent='Loading latest goal progress from Firebase…';$('cards').innerHTML='';let allGoals=0,allDone=0,allProgress=0,reporting=0,errors=0;for(const d of depts){const el=document.createElement('article');el.className='dept '+d.cls;el.innerHTML=`<div class="dept-top"><div><h3>${d.name}</h3><div class="state">Loading goal progress…</div></div><div class="dept-icon" aria-hidden="true">${d.icon}</div></div><div class="goal-stat"><strong>—</strong><span>average goal progress</span></div><div class="progress"><i></i></div><div class="nums"><span>Goals achieved: —</span><span>Total goals: —</span></div><a class="btn" href="${d.page}">Explore goal progress <span aria-hidden="true">→</span></a>`;$('cards').appendChild(el);try{const snap=await get(ref(db,'departments/'+d.key+'/dashboard'));if(!snap.exists()){el.querySelector('.state').textContent='Awaiting saved department data';el.querySelector('.state').classList.add('waiting');el.querySelector('.nums').innerHTML='<span>No goals available yet</span>';continue}const s=summarize(snap.val());if(!s.hasData){el.querySelector('.state').textContent='No goal/task records found';el.querySelector('.nums').innerHTML='<span>Department data is empty</span>';continue}reporting++;allGoals+=s.total;allDone+=s.done;allProgress+=s.avg*s.total;el.querySelector('.state').textContent=`${s.total} goals · ${s.done} achieved`;el.querySelector('.goal-stat strong').textContent=s.avg+'%';el.querySelector('.progress i').style.width=s.avg+'%';el.querySelector('.nums').innerHTML=`<span>Goals achieved: ${s.done}</span><span>Total goals: ${s.total}</span>`}catch(err){errors++;el.querySelector('.state').textContent='Could not read department data';el.querySelector('.nums').innerHTML='<span>Check Firebase read rules</span>'}}$('goalsTotal').textContent=allGoals||'—';$('goalsDone').textContent=reporting?allDone:'—';$('goalsAvg').textContent=allGoals?Math.round(allProgress/allGoals)+'%':'—';$('deptReporting').textContent=reporting+' / 4';$('dbStatus').textContent=errors?`${errors} department(s) could not be read. Firebase Rules must allow the authorized Management account to read department dashboards.`:`Showing goal-level progress for ${reporting} of 4 departments. Departments without saved records are marked as awaiting data.`}
-$('refresh').addEventListener('click',loadData);$('logout').addEventListener('click',async()=>{await signOut(auth);$('dashboard').style.display='none';$('loginPanel').style.display='block';$('password').value='';$('loginStatus').textContent='You have signed out.'});onAuthStateChanged(auth,user=>{if(user&&user.uid!==MANAGEMENT_UID)signOut(auth).catch(()=>{});});
+$('refresh').addEventListener('click',loadData);$('logout').addEventListener('click',async()=>{await signOut(auth);$('dashboard').style.display='none';$('loginPanel').style.display='block';$('password').value='';$('loginStatus').textContent='You have signed out.'});onAuthStateChanged(auth,async user=>{
+ if(!user){
+   $('dashboard').style.display='none';
+   $('loginPanel').style.display='block';
+   return;
+ }
+ if(user.uid!==MANAGEMENT_UID){
+   await signOut(auth).catch(()=>{});
+   $('dashboard').style.display='none';
+   $('loginPanel').style.display='block';
+   $('loginStatus').textContent='This account is not authorized for Management review.';
+   return;
+ }
+ // Restore the Management dashboard automatically when returning from a department review.
+ $('loginPanel').style.display='none';
+ $('dashboard').style.display='block';
+ await loadData();
+});
 </script></body></html>
