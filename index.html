@@ -7,55 +7,40 @@
 <title>Foundry Management System</title>
 <style>
 :root{--ink:#101b2a;--orange:#ff5908;--blue:#0875c9;--green:#07834d;--red:#e5221b}
-*{box-sizing:border-box}
-body{margin:0;min-height:100vh;font-family:Arial,Helvetica,sans-serif;color:#fff;background:linear-gradient(120deg,#22160f,#101b29 55%,#142333)}
-.page{width:min(1450px,100%);margin:auto;padding:26px 24px 32px}
-header{text-align:center;margin:0 auto 32px}
-.gear{width:64px;height:64px;border:3px solid #e1e8ef;border-radius:50%;display:grid;place-items:center;margin:0 auto 8px;font-size:39px}
-h1{font-size:clamp(27px,4vw,45px);margin:0 0 12px;letter-spacing:-.6px}
-.subtitle{display:flex;align-items:center;justify-content:center;gap:14px;color:#d0d9e3;font-size:clamp(11px,1.5vw,16px);font-weight:700;letter-spacing:.25em}
-.subtitle:before,.subtitle:after{content:"";width:68px;height:1px;background:#82909e}
-.departments{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
-.card{--accent:var(--orange);min-width:0;overflow:hidden;display:flex;flex-direction:column;background:#f8fafc;color:var(--ink);border:2px solid var(--accent);border-radius:17px;box-shadow:0 12px 32px #0005}
-.card.maintenance{--accent:var(--blue)}.card.quality{--accent:var(--green)}.card.heat{--accent:var(--red)}
-.photo{height:clamp(145px,20vw,255px);width:100%;display:block;object-fit:cover;background:#253343}
-.card-content{display:flex;flex:1;flex-direction:column;align-items:center;text-align:center;padding:0 12px 14px}
-.badge-icon{width:76px;height:76px;margin-top:-38px;border:5px solid #f8fafc;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:#fff;font-size:35px;z-index:1}
-h2{font-size:clamp(18px,1.8vw,26px);margin:10px 0 20px}
-a{width:100%;margin-top:auto;display:flex;justify-content:center;align-items:center;gap:12px;padding:13px 8px;border-radius:9px;background:var(--accent);color:#fff;text-decoration:none;font-size:clamp(13px,1.4vw,17px);font-weight:700}
-a:hover{filter:brightness(1.12)}a:focus-visible{outline:3px solid #111827;outline-offset:3px}
-.arrow{font-size:23px;line-height:1}
-footer{text-align:center;color:#b8c5d3;font-size:12px;margin-top:22px}
-@media(max-width:850px){.departments{grid-template-columns:repeat(2,minmax(0,1fr))}.photo{height:210px}}
-@media(max-width:480px){.page{padding:22px 13px}.departments{grid-template-columns:1fr;gap:17px}.card{max-width:390px;width:100%;margin:auto}.photo{height:205px}.subtitle{letter-spacing:.12em;gap:8px}.subtitle:before,.subtitle:after{width:24px}}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:Arial,Helvetica,sans-serif;color:#fff;background:linear-gradient(120deg,#22160f,#101b29 55%,#142333)}
+.page{width:min(1450px,100%);margin:auto;padding:26px 24px 32px}header{text-align:center;margin:0 auto 28px}.gear{width:64px;height:64px;border:3px solid #e1e8ef;border-radius:50%;display:grid;place-items:center;margin:0 auto 8px;font-size:39px}h1{font-size:clamp(27px,4vw,45px);margin:0 0 12px;letter-spacing:-.6px}.subtitle{display:flex;align-items:center;justify-content:center;gap:14px;color:#d0d9e3;font-size:clamp(11px,1.5vw,16px);font-weight:700;letter-spacing:.25em}.subtitle:before,.subtitle:after{content:"";width:68px;height:1px;background:#82909e}
+.login{max-width:540px;margin:0 auto 24px;padding:18px;background:#f8fafc;color:#101b2a;border-radius:13px;display:none}.login h2{margin:0 0 12px}.login label{display:block;font-size:13px;margin:10px 0 5px}.login input{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:7px;font:inherit}.login button{margin-top:12px;padding:11px 16px;background:#0875c9;color:white;border:0;border-radius:7px;font-weight:bold;cursor:pointer}.message{font-size:13px;color:#526173;margin-top:10px;overflow-wrap:anywhere}
+.overview{display:none;margin:0 0 20px;padding:16px 18px;border:1px solid #3b5265;border-radius:12px;background:#172735}.overview h2{margin:0 0 8px;font-size:21px}.overview .muted{color:#bdcbd7;font-size:13px}.stats{display:flex;gap:22px;flex-wrap:wrap;margin-top:10px}.stat strong{font-size:26px;display:block}.stat span{font-size:12px;color:#bdcbd7}
+.departments{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}.card{--accent:var(--orange);min-width:0;overflow:hidden;display:flex;flex-direction:column;background:#f8fafc;color:var(--ink);border:2px solid var(--accent);border-radius:17px;box-shadow:0 12px 32px #0005}.card.maintenance{--accent:var(--blue)}.card.quality{--accent:var(--green)}.card.heat{--accent:var(--red)}.photo{height:clamp(145px,20vw,255px);width:100%;display:block;object-fit:cover;background:#253343}.card-content{display:flex;flex:1;flex-direction:column;align-items:center;text-align:center;padding:0 12px 14px}.badge-icon{width:76px;height:76px;margin-top:-38px;border:5px solid #f8fafc;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:#fff;font-size:35px;z-index:1}h2.card-title{font-size:clamp(18px,1.8vw,26px);margin:10px 0 20px}.card a{width:100%;margin-top:auto;display:flex;justify-content:center;align-items:center;gap:12px;padding:13px 8px;border-radius:9px;background:var(--accent);color:#fff;text-decoration:none;font-size:clamp(13px,1.4vw,17px);font-weight:700}.card a:hover{filter:brightness(1.12)}a:focus-visible,button:focus-visible{outline:3px solid #111827;outline-offset:3px}.arrow{font-size:23px;line-height:1}.card-status{min-height:18px;font-size:12px;color:#526173;margin:-10px 0 10px}.signout{display:none;margin:0 auto 18px;padding:8px 12px;border:1px solid #82909e;border-radius:7px;color:white;background:transparent;cursor:pointer}footer{text-align:center;color:#b8c5d3;font-size:12px;margin-top:22px}
+@media(max-width:850px){.departments{grid-template-columns:repeat(2,minmax(0,1fr))}.photo{height:210px}}@media(max-width:480px){.page{padding:22px 13px}.departments{grid-template-columns:1fr;gap:17px}.card{max-width:390px;width:100%;margin:auto}.photo{height:205px}.subtitle{letter-spacing:.12em;gap:8px}.subtitle:before,.subtitle:after{width:24px}}
 </style>
 </head>
 <body>
 <main class="page">
-<header>
-  <div class="gear" aria-hidden="true">⚙</div>
-  <h1>Foundry Management System</h1>
-  <div class="subtitle">DEPARTMENT DASHBOARDS</div>
-</header>
+<header><div class="gear" aria-hidden="true">⚙</div><h1>Foundry Management System</h1><div class="subtitle">DEPARTMENT DASHBOARDS</div></header>
+<section class="login" id="loginPanel" aria-live="polite"><h2>Management Login</h2><div>Sign in with the separate Management account to view live department progress.</div><form id="loginForm"><label for="email">Management email</label><input id="email" type="email" autocomplete="username" required><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required><button type="submit">Sign in</button></form><div class="message" id="loginMessage"></div></section>
+<button class="signout" id="signout">Sign out of Management</button>
+<section class="overview" id="overview" aria-live="polite"><h2>Foundry live progress</h2><div class="muted" id="syncMessage">Waiting for Management sign-in.</div><div class="stats"><div class="stat"><strong id="completed">—</strong><span>Tasks completed</span></div><div class="stat"><strong id="taskCount">46</strong><span>Total tasks</span></div><div class="stat"><strong id="actual">—</strong><span>Average task progress</span></div></div></section>
 <section class="departments" aria-label="Department dashboards">
-  <article class="card foundry">
-    <img class="photo" src="foundry-photo.jpg" alt="Molten metal pouring in a foundry">
-    <div class="card-content"><div class="badge-icon" aria-hidden="true">▥</div><h2>Foundry</h2><a href="foundry.html">View Dashboard <span class="arrow">›</span></a></div>
-  </article>
-  <article class="card maintenance">
-    <img class="photo" src="maintenance-photo.jpg" alt="Industrial machinery and gears">
-    <div class="card-content"><div class="badge-icon" aria-hidden="true">⚒</div><h2>Maintenance</h2><a href="maintenance.html">View Dashboard <span class="arrow">›</span></a></div>
-  </article>
-  <article class="card quality">
-    <img class="photo" src="quality-photo.jpg" alt="Precision inspection of a metal component">
-    <div class="card-content"><div class="badge-icon" aria-hidden="true">✓</div><h2>Quality</h2><a href="quality.html">View Dashboard <span class="arrow">›</span></a></div>
-  </article>
-  <article class="card heat">
-    <img class="photo" src="heat-treatment-photo.jpg" alt="Industrial heat treatment furnace">
-    <div class="card-content"><div class="badge-icon" aria-hidden="true">♨</div><h2>Heat Treatment</h2><a href="heat-treatment.html">View Dashboard <span class="arrow">›</span></a></div>
-  </article>
-</section>
-<footer>Foundry Management System · Department Progress Overview</footer>
+<article class="card foundry"><img class="photo" src="foundry-photo.jpg" alt="Molten metal pouring in a foundry"><div class="card-content"><div class="badge-icon" aria-hidden="true">▥</div><h2 class="card-title">Foundry</h2><div class="card-status" id="foundryStatus">Live progress available after Management sign-in</div><a href="foundry.html">View Dashboard <span class="arrow">›</span></a></div></article>
+<article class="card maintenance"><img class="photo" src="maintenance-photo.jpg" alt="Industrial machinery and gears"><div class="card-content"><div class="badge-icon" aria-hidden="true">⚒</div><h2 class="card-title">Maintenance</h2><div class="card-status">Department dashboard</div><a href="maintenance.html">View Dashboard <span class="arrow">›</span></a></div></article>
+<article class="card quality"><img class="photo" src="quality-photo.jpg" alt="Precision inspection of a metal component"><div class="card-content"><div class="badge-icon" aria-hidden="true">✓</div><h2 class="card-title">Quality</h2><div class="card-status">Department dashboard</div><a href="quality.html">View Dashboard <span class="arrow">›</span></a></div></article>
+<article class="card heat"><img class="photo" src="heat-treatment-photo.jpg" alt="Industrial heat treatment furnace"><div class="card-content"><div class="badge-icon" aria-hidden="true">♨</div><h2 class="card-title">Heat Treatment</h2><div class="card-status">Department dashboard</div><a href="heat-treatment.html">View Dashboard <span class="arrow">›</span></a></div></article>
+</section><footer>Foundry Management System · Department Progress Overview</footer>
 </main>
-</body>
-</html>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { getDatabase, ref, get } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+const firebaseConfig={apiKey:'AIzaSyCWBwb-lmErQ2Yb3C8uFR6uHzCmaWcFJ0A',authDomain:'foundry-department-dashboard.firebaseapp.com',databaseURL:'https://foundry-department-dashboard-default-rtdb.asia-southeast1.firebasedatabase.app',projectId:'foundry-department-dashboard',storageBucket:'foundry-department-dashboard.firebasestorage.app',messagingSenderId:'875228967719',appId:'1:875228967719:web:b5e96a39a706ba0dbd2f02'};
+const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getDatabase(app);const $=id=>document.getElementById(id);
+$('loginPanel').style.display='block';
+$('loginForm').addEventListener('submit',async e=>{e.preventDefault();$('loginMessage').textContent='Signing in…';try{await signInWithEmailAndPassword(auth,$('email').value.trim(),$('password').value)}catch(err){$('loginMessage').textContent='Sign-in failed: '+(err.code||err.message)}});
+$('signout').addEventListener('click',async()=>{await signOut(auth)});
+onAuthStateChanged(auth,async user=>{if(!user){$('loginPanel').style.display='block';$('signout').style.display='none';$('overview').style.display='none';$('loginMessage').textContent='Sign in with the Management account to view live data.';$('foundryStatus').textContent='Live progress available after Management sign-in';return;}
+$('loginPanel').style.display='none';$('signout').style.display='block';$('overview').style.display='block';$('syncMessage').textContent='Loading live Foundry data…';
+try{const snap=await get(ref(db,'departments/foundry/dashboard'));if(!snap.exists()){$('syncMessage').textContent='No Foundry dashboard data found yet.';return;}const data=snap.val()||{};const progress=data.progress||{};const vals=Object.values(progress).map(v=>Math.max(0,Math.min(100,Number(v)||0)));const completed=vals.filter(v=>v>=100).length;const actual=vals.length?Math.round(vals.reduce((a,v)=>a+v,0)/vals.length):0;$('completed').textContent=completed;$('taskCount').textContent=46;$('actual').textContent=actual+'%';$('syncMessage').textContent='Live data loaded from Firebase. Read-only Management view.';$('foundryStatus').textContent=`${completed} completed · ${actual}% average progress`;}
+catch(err){$('syncMessage').textContent='Could not read Foundry data: '+(err.code||err.message)+'. Check that the Management account UID is permitted by the database rules.';$('foundryStatus').textContent='Unable to load live progress';}
+});
+</script>
+</body></html>
