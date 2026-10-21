@@ -1,15 +1,261 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#111827">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101722">
 <title>Foundry Management System</title>
+
 <style>
-:root{color-scheme:dark;--bg:#101722;--panel:#172230;--text:#f8fafc;--muted:#b7c3d0}*{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:Arial,Helvetica,sans-serif;color:var(--text);background:radial-gradient(ellipse at 10% 10%,#66320f 0,transparent 36%),radial-gradient(ellipse at 90% 12%,#153d5a 0,transparent 38%),linear-gradient(145deg,#0c121b,#172433 55%,#101722)}.wrap{max-width:1180px;margin:auto;padding:42px 22px 36px}header{text-align:center;margin-bottom:34px}.logo{width:64px;height:64px;border:3px solid #d8e1eb;border-radius:50%;display:grid;place-items:center;margin:0 auto 14px;font-size:32px}h1{font-size:clamp(28px,4vw,46px);margin:0 0 12px;letter-spacing:-.6px}.subtitle{font-size:13px;letter-spacing:.28em;color:#c4ced9;font-weight:700}.rule{display:flex;align-items:center;justify-content:center;gap:16px}.rule:before,.rule:after{content:"";height:1px;background:#718096;width:80px}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}.card{background:#f8fafc;color:#111827;border-radius:16px;overflow:hidden;border:3px solid var(--accent);box-shadow:0 14px 36px #0005;display:flex;flex-direction:column;min-width:0}.art{height:190px;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent),#182536);position:relative;overflow:hidden}.art:before{content:"";position:absolute;width:210px;height:210px;border:1px solid #ffffff45;border-radius:50%;box-shadow:0 0 0 20px #ffffff0b,0 0 0 42px #ffffff0b}.art .symbol{font-size:74px;z-index:1;color:#fff;text-shadow:0 5px 20px #0005}.content{padding:20px 16px 17px;display:flex;flex:1;flex-direction:column;align-items:center;text-align:center}.icon{height:74px;width:74px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:white;font-size:34px;margin-top:-55px;border:5px solid #f8fafc;z-index:2}h2{font-size:23px;margin:12px 0 20px}a{margin-top:auto;display:flex;align-items:center;justify-content:center;gap:12px;text-decoration:none;background:var(--accent);color:white;padding:14px 12px;border-radius:9px;font-weight:700;width:100%;transition:filter .15s,transform .15s}a:hover{filter:brightness(1.12);transform:translateY(-1px)}a:focus-visible{outline:3px solid #111827;outline-offset:3px}footer{text-align:center;color:var(--muted);font-size:12px;margin-top:28px}@media(max-width:900px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.art{height:160px}}@media(max-width:500px){.wrap{padding:28px 14px}.grid{grid-template-columns:1fr}.art{height:145px}.card{max-width:400px;width:100%;margin:auto}.subtitle{letter-spacing:.16em}}
-</style></head>
-<body><main class="wrap"><header><div class="logo" aria-hidden="true">⚙</div><h1>Foundry Management System</h1><div class="rule"><div class="subtitle">DEPARTMENT DASHBOARDS</div></div></header>
-<section class="grid" aria-label="Department dashboards">
-<article class="card" style="--accent:#f45b0b"><div class="art" aria-hidden="true"><span class="symbol">♨</span></div><div class="content"><div class="icon" aria-hidden="true">▥</div><h2>Foundry</h2><a href="foundry.html">View Dashboard <span aria-hidden="true">›</span></a></div></article>
-<article class="card" style="--accent:#0875c9"><div class="art" aria-hidden="true"><span class="symbol">⚙</span></div><div class="content"><div class="icon" aria-hidden="true">⚒</div><h2>Maintenance</h2><a href="maintenance.html">View Dashboard <span aria-hidden="true">›</span></a></div></article>
-<article class="card" style="--accent:#07834d"><div class="art" aria-hidden="true"><span class="symbol">⌖</span></div><div class="content"><div class="icon" aria-hidden="true">✓</div><h2>Quality</h2><a href="quality.html">View Dashboard <span aria-hidden="true">›</span></a></div></article>
-<article class="card" style="--accent:#e12620"><div class="art" aria-hidden="true"><span class="symbol">♨</span></div><div class="content"><div class="icon" aria-hidden="true">♨</div><h2>Heat Treatment</h2><a href="heat-treatment.html">View Dashboard <span aria-hidden="true">›</span></a></div></article>
-</section><footer>Management overview · Select a department to open its dashboard</footer></main></body></html>
+:root {
+  --bg: #101722;
+  --ink: #101b2a;
+  --muted: #d4dce5;
+  --orange: #ff5908;
+  --blue: #0875c9;
+  --green: #07834d;
+  --red: #e5221b;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: white;
+  font-family: Arial, Helvetica, sans-serif;
+  background:
+    radial-gradient(ellipse at 8% 15%, #8a3c12 0, transparent 36%),
+    radial-gradient(ellipse at 88% 15%, #173e59 0, transparent 40%),
+    linear-gradient(145deg, #0b1018, #172638 60%, #101722);
+}
+.page {
+  width: min(1450px, 100%);
+  margin: auto;
+  padding: 28px 24px 36px;
+}
+header {
+  text-align: center;
+  margin-bottom: 38px;
+}
+.gear {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 10px;
+  border: 4px solid #e1e8ef;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 43px;
+  line-height: 1;
+}
+h1 {
+  margin: 0 0 12px;
+  font-size: clamp(27px, 4vw, 48px);
+  letter-spacing: -.7px;
+}
+.subtitle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 17px;
+  color: #d0d9e3;
+  font-size: clamp(11px, 1.6vw, 17px);
+  font-weight: 700;
+  letter-spacing: .25em;
+}
+.subtitle::before, .subtitle::after {
+  content: "";
+  width: 76px;
+  height: 1px;
+  background: #82909e;
+}
+.departments {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+}
+.card {
+  --accent: var(--orange);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 3px solid var(--accent);
+  border-radius: 19px;
+  background: #f8fafc;
+  color: var(--ink);
+  box-shadow: 0 12px 32px #0005;
+}
+.card.maintenance { --accent: var(--blue); }
+.card.quality { --accent: var(--green); }
+.card.heat { --accent: var(--red); }
+
+.art {
+  position: relative;
+  height: 220px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--accent) 85%, white), transparent 52%),
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 75%, #101722), #142333);
+}
+.art::before, .art::after {
+  content: "";
+  position: absolute;
+  width: 230px;
+  height: 230px;
+  border: 1px solid #ffffff35;
+  border-radius: 50%;
+}
+.art::after { width: 280px; height: 280px; }
+.art-icon {
+  z-index: 1;
+  font-size: 86px;
+  color: white;
+  text-shadow: 0 4px 20px #0005;
+}
+.card-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 16px 17px;
+  text-align: center;
+}
+.badge-icon {
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  margin-top: -48px;
+  border: 6px solid #f8fafc;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  font-size: 39px;
+  z-index: 2;
+}
+h2 {
+  margin: 13px 0 22px;
+  font-size: clamp(19px, 2vw, 28px);
+}
+.card a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  margin-top: auto;
+  padding: 15px 10px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: white;
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 700;
+  transition: filter .15s, transform .15s;
+}
+.card a:hover {
+  filter: brightness(1.12);
+  transform: translateY(-1px);
+}
+.card a:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 3px;
+}
+.arrow { font-size: 24px; line-height: 1; }
+footer {
+  margin-top: 26px;
+  text-align: center;
+  color: #b8c5d3;
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .departments { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .art { height: 180px; }
+}
+@media (max-width: 480px) {
+  .page { padding: 24px 13px; }
+  header { margin-bottom: 27px; }
+  .departments { grid-template-columns: 1fr; gap: 18px; }
+  .card { width: 100%; max-width: 390px; margin: auto; }
+  .art { height: 165px; }
+  .subtitle { letter-spacing: .12em; gap: 8px; }
+  .subtitle::before, .subtitle::after { width: 25px; }
+}
+</style>
+</head>
+
+<body>
+<main class="page">
+
+<header>
+  <div class="gear" aria-hidden="true">⚙</div>
+  <h1>Foundry Management System</h1>
+  <div class="subtitle">DEPARTMENT DASHBOARDS</div>
+</header>
+
+<section class="departments" aria-label="Department dashboards">
+
+  <article class="card foundry">
+    <div class="art" aria-hidden="true">
+      <span class="art-icon">♨</span>
+    </div>
+    <div class="card-content">
+      <div class="badge-icon" aria-hidden="true">▥</div>
+      <h2>Foundry</h2>
+      <a href="foundry.html">
+        View Dashboard <span class="arrow">›</span>
+      </a>
+    </div>
+  </article>
+
+  <article class="card maintenance">
+    <div class="art" aria-hidden="true">
+      <span class="art-icon">⚙</span>
+    </div>
+    <div class="card-content">
+      <div class="badge-icon" aria-hidden="true">⚒</div>
+      <h2>Maintenance</h2>
+      <a href="maintenance.html">
+        View Dashboard <span class="arrow">›</span>
+      </a>
+    </div>
+  </article>
+
+  <article class="card quality">
+    <div class="art" aria-hidden="true">
+      <span class="art-icon">⌖</span>
+    </div>
+    <div class="card-content">
+      <div class="badge-icon" aria-hidden="true">✓</div>
+      <h2>Quality</h2>
+      <a href="quality.html">
+        View Dashboard <span class="arrow">›</span>
+      </a>
+    </div>
+  </article>
+
+  <article class="card heat">
+    <div class="art" aria-hidden="true">
+      <span class="art-icon">♨</span>
+    </div>
+    <div class="card-content">
+      <div class="badge-icon" aria-hidden="true">♨</div>
+      <h2>Heat Treatment</h2>
+      <a href="heat-treatment.html">
+        View Dashboard <span class="arrow">›</span>
+      </a>
+    </div>
+  </article>
+
+</section>
+
+<footer>
+  Foundry Management System · Department Progress Overview
+</footer>
+
+</main>
+</body>
+</html>
