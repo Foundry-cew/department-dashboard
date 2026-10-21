@@ -19,26 +19,34 @@ function groupGoals(data){
  const today=Math.floor(Date.now()/86400000+25569);
  const map=new Map();
  for(let i=0;i<tasks.length;i++){
-  const t=tasks[i]||{},id=String(t.id??i+1),p=progress[id]??Math.max(0,Math.min(100,Number(t.progress??t.pct??t.p??0)||0));
-  let raw=t.g??t.goalId??t.goal??id.split('.')[0];
+  const rawTask=tasks[i]||{};
+  // Foundry stores each task as [id, title, owner, startExcelDate, finishExcelDate].
+  // Maintenance stores tasks as objects with id/t/g/s/f/p fields.
+  const isArray=Array.isArray(rawTask);
+  const id=String(isArray?(rawTask[0]??i+1):(rawTask.id??i+1));
+  const taskTitle=String(isArray?(rawTask[1]||('Task '+id)):(rawTask.t||rawTask.title||('Task '+id)));
+  const start=Number(isArray?rawTask[3]:rawTask.s)||0;
+  const finish=Number(isArray?rawTask[4]:rawTask.f)||0;
+  const p=progress[id]??Math.max(0,Math.min(100,Number(isArray?0:(rawTask.progress??rawTask.pct??rawTask.p??0))||0));
+  let raw=isArray?id.split('.')[0]:(rawTask.g??rawTask.goalId??rawTask.goal??id.split('.')[0]);
   if(raw&&typeof raw==='object')raw=raw.id??raw.number??raw.title??'Other';
   const key=String(raw||'Other').replace(/^goal\s/i,'');
-  let title=String(t.goalTitle??t.goalName??'').trim();
-  if(!title&&typeof t.goal==='string'&&!/^\d+(\.\d+)?$/.test(t.goal))title=t.goal;
+  let title=String(rawTask.goalTitle??rawTask.goalName??'').trim();
+  if(!title&&!isArray&&typeof rawTask.goal==='string'&&!/^\d+(\.\d+)?$/.test(rawTask.goal))title=rawTask.goal;
   if(dept==='maintenance'&&maintenanceGoalTitles[key])title=maintenanceGoalTitles[key];
   if(!map.has(key))map.set(key,{key,title,tasks:[],values:[],taskCount:0,doneTasks:0,overdueTasks:[],behindTasks:[],blockers:[],plannedWeighted:0,actualWeighted:0,totalWeight:0,latestFinish:0});
-  const g=map.get(key),weight=Math.max(1,(Number(t.f)||today)-(Number(t.s)||today)+1);
-  const finish=Number(t.f)||0,start=Number(t.s)||finish;
-  const planned=finish? (today<start?0:today>=finish?100:Math.round((today-start)/Math.max(1,finish-start)*100)):0;
+  const g=map.get(key),weight=Math.max(1,(finish||today)-(start||today)+1);
+  const planned=finish?(today<start?0:today>=finish?100:Math.round((today-start)/Math.max(1,finish-start)*100)):0;
   const note=notes[id]||notes[id.replaceAll('.','_')]||{};
-  const reason=String(note.reason||'').trim(),action=String(note.action||'').trim();
-  g.tasks.push({id,title:String(t.t||t.title||('Task '+id)),p,finish,planned,reason,action});
+  const reason=String(typeof note==='string'?note:(note.reason||note.delay||note.note||'')).trim();
+  const action=String(note.action||note.recoveryAction||note.recovery||'').trim();
+  g.tasks.push({id,title:taskTitle,p,finish,planned,reason,action});
   g.values.push(p);g.taskCount++;if(p>=100)g.doneTasks++;
   g.totalWeight+=weight;g.actualWeighted+=p*weight;g.plannedWeighted+=planned*weight;
   if(finish)g.latestFinish=Math.max(g.latestFinish,finish);
-  if(p<100&&finish&&today>finish)g.overdueTasks.push({id,title:String(t.t||t.title||('Task '+id)),finish,reason,action});
-  if(p<100&&planned-p>15)g.behindTasks.push({id,title:String(t.t||t.title||('Task '+id)),planned,p});
-  if(reason)g.blockers.push({id,title:String(t.t||t.title||('Task '+id)),reason,action});
+  if(p<100&&finish&&today>finish)g.overdueTasks.push({id,title:taskTitle,finish,reason,action});
+  if(p<100&&planned-p>15)g.behindTasks.push({id,title:taskTitle,planned,p});
+  if(reason)g.blockers.push({id,title:taskTitle,reason,action});
  }
  return [...map.values()].map(g=>{
   g.progress=g.values.length?Math.round(g.values.reduce((a,b)=>a+b,0)/g.values.length):0;
