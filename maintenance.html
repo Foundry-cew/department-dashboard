@@ -92,13 +92,15 @@ let pct = {};
 let T = [];
 let owners = [];
 let delayNotes = {};
+const firebaseSafeMap = obj => Object.fromEntries(Object.entries(obj || {}).map(([k,v]) => [String(k).replaceAll('.', '_'), v]));
+const restoreTaskKeys = obj => Object.fromEntries(Object.entries(obj || {}).map(([k,v]) => [String(k).replaceAll('_', '.'), v]));
 
 function persistCloud(){
   if(!cloudReady || !auth.currentUser || auth.currentUser.uid !== MAINTENANCE_UID) return;
   clearTimeout(cloudWriteTimer);
   cloudWriteTimer = setTimeout(async()=>{
     try {
-      await set(ref(db, DASHBOARD_PATH), { pct, tasks:T, owners, delayNotes });
+      await set(ref(db, DASHBOARD_PATH), { pct: firebaseSafeMap(pct), tasks:T, owners, delayNotes: firebaseSafeMap(delayNotes) });
       const status=document.getElementById("cloudStatus"); if(status) status.textContent="Saved online · "+new Date().toLocaleTimeString();
     } catch(err) {
       const status=document.getElementById("cloudStatus"); if(status) status.textContent="Save failed: "+err.message;
@@ -173,10 +175,10 @@ try {
   const snap=await get(ref(db,DASHBOARD_PATH));
   if(snap.exists()){
     const cloud=snap.val()||{};
-    if(cloud.pct && typeof cloud.pct==="object") pct=cloud.pct;
+    if(cloud.pct && typeof cloud.pct==="object") pct=restoreTaskKeys(cloud.pct);
     if(Array.isArray(cloud.tasks)) T=cloud.tasks;
     if(Array.isArray(cloud.owners)) owners=cloud.owners;
-    if(cloud.delayNotes && typeof cloud.delayNotes==="object") delayNotes=cloud.delayNotes;
+    if(cloud.delayNotes && typeof cloud.delayNotes==="object") delayNotes=restoreTaskKeys(cloud.delayNotes);
   }
   owners=[...new Set([...T.map(t=>String(t.o||"Unassigned").trim()),...owners].filter(Boolean))].sort((a,b)=>a.localeCompare(b));
   cloudReady=true;
