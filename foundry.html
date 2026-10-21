@@ -352,7 +352,14 @@ render();
 </script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+import {
+  getAuth,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut,
+  setPersistence,
+  inMemoryPersistence
+} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
 
 const firebaseConfig = {
@@ -366,6 +373,11 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+
+// Use an in-memory session and clear any previous sign-in on each page load.
+await setPersistence(auth, inMemoryPersistence);
+await signOut(auth);
+
 const db = getDatabase(app);
 const loginForm = document.getElementById("loginForm");
 const loginStatus = document.getElementById("loginStatus");
