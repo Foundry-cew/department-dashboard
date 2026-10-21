@@ -70,14 +70,29 @@ tr.done td:nth-child(2){color:var(--mute);text-decoration:line-through}
 @media (max-width:760px){.hero{grid-template-columns:1fr}.side{border-left:0;padding-left:0;border-top:1px solid var(--line);padding-top:14px}.big{font-size:52px}.goal{grid-template-columns:1fr 60px}.goal .bar{grid-column:1/3;order:3}.goal .p{order:2}.gantt{grid-template-columns:150px 1fr}}
 
 .admin-grid{display:grid;grid-template-columns:1fr 1.25fr;gap:14px}.admin-card{border:1px solid var(--line);border-radius:8px;padding:14px;min-width:0}.admin-card h3{font-size:17px;margin:0 0 10px;font-family:"Barlow Condensed",sans-serif}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}.form-grid .full{grid-column:1/-1}.form-grid input,.form-grid select{width:100%;min-width:0}button.danger,.task-delete{border-color:var(--over);color:var(--over)}td.notes-cell{min-width:260px}td.notes-cell textarea{display:block;width:100%;min-width:230px;min-height:54px;margin:4px 0 7px;resize:vertical;font:12px/1.4 Barlow,system-ui,sans-serif;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:6px;padding:6px}.task-delete{padding:3px 7px}table{min-width:1450px}@media(max-width:760px){.admin-grid{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.form-grid .full{grid-column:auto}}
+
+#loginPanel{max-width:460px;margin:48px auto;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:24px}
+#loginPanel h2{margin-bottom:8px}#loginPanel input{width:100%;margin:5px 0 12px;padding:10px}
+#loginPanel button{padding:9px 14px;background:var(--done);color:#fff;border:0}
+#loginStatus{margin-top:10px;color:var(--mute);font-size:13px}#cloudStatus{font-size:12px;color:var(--mute);margin-top:4px}
+body:not(.authenticated) .wrap{display:none}body.authenticated #loginPanel{display:none}
 </style>
 </head>
 <body>
+<section id="loginPanel" aria-live="polite">
+  <h2>Foundry Department Login</h2>
+  <form id="loginForm">
+    <label class="f">Email address<input id="loginEmail" type="email" autocomplete="username" required placeholder="Foundry account email"></label>
+    <label class="f">Password<input id="loginPassword" type="password" autocomplete="current-password" required placeholder="Password"></label>
+    <button type="submit" id="loginButton">Sign in</button>
+  </form>
+  <div id="loginStatus" role="status">Connecting to Firebase…</div>
+</section>
 <div class="wrap">
 <header>
   <div>
     <h1>Foundry KPI Weekly Review</h1>
-    <div class="sub">FY 2026-27 · Foundry Manager · 9 goals, 46 tasks</div>
+    <div class="sub">FY 2026-27 · Foundry Manager · 9 goals, 46 tasks</div><div id="cloudStatus">Firebase: waiting for sign-in</div>
   </div>
   <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
     <label class="f">Review date<input type="date" id="asof"></label>
@@ -221,9 +236,9 @@ try{const x=JSON.parse(localStorage.getItem(TASKS_KEY)||"null");if(Array.isArray
 try{const x=JSON.parse(localStorage.getItem(OWNERS_KEY)||"[]");if(Array.isArray(x))owners=x}catch(e){}
 try{delayNotes=JSON.parse(localStorage.getItem(NOTES_KEY)||"{}")||{}}catch(e){delayNotes={}}
 owners=[...new Set([...OWN,...T.map(t=>String(t.o||"Unassigned").trim()),...owners].filter(Boolean))].sort((a,b)=>a.localeCompare(b));
-const saveTasks=()=>{try{localStorage.setItem(TASKS_KEY,JSON.stringify(T))}catch(e){}};
-const saveOwners=()=>{try{localStorage.setItem(OWNERS_KEY,JSON.stringify(owners))}catch(e){}};
-const saveNotes=()=>{try{localStorage.setItem(NOTES_KEY,JSON.stringify(delayNotes))}catch(e){}};
+const saveTasks=()=>{try{localStorage.setItem(TASKS_KEY,JSON.stringify(T))}catch(e){};window.queueFoundryCloudSave?.();}
+const saveOwners=()=>{try{localStorage.setItem(OWNERS_KEY,JSON.stringify(owners))}catch(e){};window.queueFoundryCloudSave?.();}
+const saveNotes=()=>{try{localStorage.setItem(NOTES_KEY,JSON.stringify(delayNotes))}catch(e){};window.queueFoundryCloudSave?.();}
 const excelDay=iso=>Math.floor(Date.parse(iso+"T00:00:00Z")/86400000+25569);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
@@ -236,7 +251,7 @@ const plan=(t,d)=>d<t.s?0:d>=t.f?100:Math.round((d-t.s)/(t.f-t.s)*100);
 const stat=(t,d)=>P(t)>=100?"done":d>t.f?"overdue":(P(t)>0||d>=t.s)?"active":"later";
 const wt=t=>t.f-t.s+1;
 const wavg=(list,fn)=>{const w=list.reduce((a,t)=>a+wt(t),0);return w?list.reduce((a,t)=>a+fn(t)*wt(t),0)/w:0};
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(pct))}catch(e){}};
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(pct))}catch(e){};window.queueFoundryCloudSave?.();}
 
 function refreshOwnerControls(){
   $("fo").innerHTML='<option value="">All owners</option>'+owners.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("");
@@ -291,6 +306,17 @@ function render(){
   $("rows").innerHTML=rows.map(t=>{const s=stat(t,d),late=P(t)<100&&d>=t.f,nt=delayNotes[t.id]||{};
     return `<tr class="${s}"><td class="id">${esc(t.id)}</td><td>${esc(t.t)}</td><td>${esc(t.o||"Unassigned")}</td><td class="mini">${fmt(t.s)} – ${fmt(t.f)}</td><td>${plan(t,d)}%</td><td class="pc"><input type="number" min="0" max="100" step="5" value="${P(t)}" data-id="${esc(t.id)}" aria-label="Percent complete for task ${esc(t.id)}"> <button data-done="${esc(t.id)}" title="Mark 100%">✓</button></td><td><span class="tag ${s}">${ST[s][0]}</span></td><td class="notes-cell">${late?'<span class="mini">Due / overdue — record reason and recovery action</span>':'<span class="mini">Optional delay / recovery notes</span>'}<textarea data-note-id="${esc(t.id)}" data-note="reason" placeholder="Why is this task late?">${esc(nt.reason||"")}</textarea><textarea data-note-id="${esc(t.id)}" data-note="action" placeholder="Recovery action / measures to catch up">${esc(nt.action||"")}</textarea></td><td><button class="task-delete" data-delete-task="${esc(t.id)}">Delete task</button></td></tr>`}).join("")||'<tr><td colspan="9" class="empty">No tasks match these filters.</td></tr>';
 }
+window.exportFoundryState=()=>({version:1,progress:pct,tasks:T,owners,delayNotes,updatedAt:new Date().toISOString()});
+window.importFoundryState=(data)=>{
+  if(data&&typeof data==="object"){
+    if(data.progress&&typeof data.progress==="object")pct=data.progress;
+    if(Array.isArray(data.tasks)&&data.tasks.length)T=data.tasks;
+    if(Array.isArray(data.owners))owners=[...new Set([...OWN,...T.map(t=>String(t.o||"Unassigned").trim()),...data.owners].filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+    if(data.delayNotes&&typeof data.delayNotes==="object")delayNotes=data.delayNotes;
+    try{localStorage.setItem(KEY,JSON.stringify(pct));localStorage.setItem(TASKS_KEY,JSON.stringify(T));localStorage.setItem(OWNERS_KEY,JSON.stringify(owners));localStorage.setItem(NOTES_KEY,JSON.stringify(delayNotes))}catch(e){}
+    refreshOwnerControls();render();
+  }
+};
 $("rows").addEventListener("change",e=>{const i=e.target.dataset.id;if(i){pct[i]=Math.min(100,Math.max(0,+e.target.value||0));save();render()}});
 $("rows").addEventListener("click",e=>{const i=e.target.dataset.done;if(i){pct[i]=100;save();render()}});
 $("goals").addEventListener("click",e=>{const b=e.target.closest("[data-g]");if(b){sel.g=sel.g==b.dataset.g?"":b.dataset.g;$("fg").value=sel.g;render()}});
@@ -306,6 +332,89 @@ $("asof").onchange=render;
 $("reset").onclick=()=>{if(confirm("Set every task back to 0%?")){pct={};save();render()}};
 $("newTaskStart").value="2026-07-01";$("newTaskFinish").value="2026-07-31";
 render();
+</script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCWBwb-lmErQ2Yb3C8uFR6uHzCmaWcFJ0A",
+  authDomain: "foundry-department-dashboard.firebaseapp.com",
+  databaseURL: "https://foundry-department-dashboard-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "foundry-department-dashboard",
+  storageBucket: "foundry-department-dashboard.firebasestorage.app",
+  messagingSenderId: "875228967719",
+  appId: "1:875228967719:web:b5e96a39a706ba0dbd2f02"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+const loginForm = document.getElementById("loginForm");
+const loginStatus = document.getElementById("loginStatus");
+const loginButton = document.getElementById("loginButton");
+const cloudStatus = document.getElementById("cloudStatus");
+const foundryRef = ref(db, "departments/foundry/dashboard");
+let cloudReady = false;
+let saveTimer;
+let currentUser = null;
+
+window.queueFoundryCloudSave = () => {
+  if (!cloudReady || !currentUser) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    try {
+      await set(foundryRef, window.exportFoundryState());
+      cloudStatus.textContent = "Firebase: saved online";
+    } catch (err) {
+      cloudStatus.textContent = "Firebase save failed: " + (err?.message || "check database rules");
+    }
+  }, 700);
+};
+
+loginForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  loginButton.disabled = true;
+  loginStatus.textContent = "Signing in…";
+  try {
+    await signInWithEmailAndPassword(auth, document.getElementById("loginEmail").value.trim(), document.getElementById("loginPassword").value);
+    loginStatus.textContent = "Signed in.";
+  } catch (err) {
+    loginStatus.textContent = "Sign-in failed. Check the email and password, then try again.";
+  } finally { loginButton.disabled = false; }
+});
+
+onAuthStateChanged(auth, async (user) => {
+  currentUser = user;
+  cloudReady = false;
+  if (!user) {
+    document.body.classList.remove("authenticated");
+    loginStatus.textContent = "Sign in with your Foundry department account.";
+    cloudStatus.textContent = "Firebase: signed out";
+    return;
+  }
+  loginStatus.textContent = "Loading Foundry dashboard…";
+  cloudStatus.textContent = "Firebase: loading online data…";
+  try {
+    const snapshot = await get(foundryRef);
+    if (snapshot.exists()) {
+      window.importFoundryState(snapshot.val());
+    } else {
+      // First login: upload this browser's existing dashboard state to the cloud.
+      await set(foundryRef, window.exportFoundryState());
+    }
+    cloudReady = true;
+    document.body.classList.add("authenticated");
+    loginStatus.textContent = "Signed in.";
+    cloudStatus.textContent = "Firebase: connected and saved online";
+  } catch (err) {
+    cloudReady = false;
+    document.body.classList.remove("authenticated");
+    loginStatus.textContent = "Login succeeded, but database access failed. Ask the administrator to apply the Firebase Rules for this Foundry UID.";
+    cloudStatus.textContent = "Firebase database error: " + (err?.message || "permission denied");
+    await signOut(auth);
+  }
+});
 </script>
 </body>
 </html>
