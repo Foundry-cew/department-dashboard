@@ -147,6 +147,19 @@ body:not(.authenticated) .wrap{display:none}body.authenticated #loginPanel{displ
       <div class="note">If the deleted owner is assigned to any task, those tasks will be changed to “Unassigned”.</div>
     </div>
     <div class="admin-card">
+      <h3>Assign owner to an existing task</h3>
+      <form id="assignOwnerForm">
+        <div class="form-grid">
+          <label class="f">Goal<select id="assignGoal" required></select></label>
+          <label class="f">Task<select id="assignTask" required></select></label>
+          <label class="f full">Owner<select id="assignOwnerSelect" required></select></label>
+          <label class="f full">Or add a new owner<input id="assignNewOwner" maxlength="120" placeholder="Optional: enter a new owner name"></label>
+        </div>
+        <button type="submit">Save owner assignment</button>
+      </form>
+      <div class="note">Select a goal and one of its existing tasks. Assigning an owner does not create a new task or change its progress, dates, or delay notes.</div>
+    </div>
+    <div class="admin-card">
       <h3>Add a task to a goal</h3>
       <form id="taskForm"><div class="form-grid">
         <label class="f">Goal<select id="newTaskGoal" required></select></label>
@@ -258,10 +271,21 @@ function refreshOwnerControls(){
   $("fo").innerHTML='<option value="">All owners</option>'+owners.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("");
   $("removeOwner").innerHTML=owners.length?owners.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join(""):'<option value="">No owners</option>';
   $("newTaskOwner").innerHTML='<option value="Unassigned">Unassigned</option>'+owners.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("");
+  const assignOwner=$("assignOwnerSelect");
+  if(assignOwner) assignOwner.innerHTML='<option value="">Choose owner</option>'+owners.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("");
 }
 refreshOwnerControls();
 $("fg").innerHTML='<option value="">All goals</option>'+Object.keys(G).map(k=>`<option value="${k}">G${k} ${G[k]}</option>`).join("");
 $("newTaskGoal").innerHTML=Object.keys(G).map(k=>`<option value="${k}">G${k} — ${esc(G[k])}</option>`).join("");
+  $("assignGoal").innerHTML=Object.keys(G).map(k=>`<option value="${k}">G${k} — ${esc(G[k])}</option>`).join("");
+  function refreshAssignableTasks(){
+    const g=+$("assignGoal").value;
+    const list=T.filter(t=>t.g===g);
+    $("assignTask").innerHTML=list.length?list.map(t=>`<option value="${esc(t.id)}">${esc(t.id)} — ${esc(t.t)}</option>`).join(""):'<option value="">No tasks in this goal</option>';
+  }
+  $("assignGoal").addEventListener("change",refreshAssignableTasks);
+  refreshAssignableTasks();
+
 const minS=Math.min(...T.map(t=>t.s)),maxF=Math.max(...T.map(t=>t.f)),span=maxF-minS;
 const gp=v=>(v-minS)/span*100;
 function months(){const out=[],c=new Date((minS-25569)*864e5);let cur=new Date(Date.UTC(c.getUTCFullYear(),c.getUTCMonth(),1));
@@ -283,6 +307,16 @@ function ganttHTML(d){
 
 function render(){
   refreshOwnerControls();
+  if($("assignGoal")) {
+    const priorTask=$("assignTask").value;
+    const priorGoal=$("assignGoal").value;
+    $("assignGoal").innerHTML=Object.keys(G).map(k=>`<option value="${k}">G${k} — ${esc(G[k])}</option>`).join("");
+    if(priorGoal && G[priorGoal]) $("assignGoal").value=priorGoal;
+    const g=+$("assignGoal").value;
+    const list=T.filter(t=>t.g===g);
+    $("assignTask").innerHTML=list.length?list.map(t=>`<option value="${esc(t.id)}">${esc(t.id)} — ${esc(t.t)}</option>`).join(""):'<option value="">No tasks in this goal</option>';
+    if(list.some(t=>String(t.id)===priorTask)) $("assignTask").value=priorTask;
+  }
   const d=asOf(),n=T.length,c={done:0,active:0,overdue:0,later:0};
   T.forEach(t=>c[stat(t,d)]++);
   const rem=n-c.done;
@@ -342,6 +376,29 @@ $("fo").onchange=e=>{sel.o=e.target.value;render()};
 $("fg").onchange=e=>{sel.g=e.target.value;render()};
 $("rows").addEventListener("input",e=>{const id=e.target.dataset.noteId,field=e.target.dataset.note;if(id&&field){delayNotes[id]=delayNotes[id]||{};delayNotes[id][field]=e.target.value;saveNotes()}});
 $("rows").addEventListener("click",e=>{const id=e.target.dataset.deleteTask;if(id&&confirm(`Delete task ${id}? This cannot be undone in this browser.`)){T=T.filter(t=>t.id!==id);delete pct[id];delete delayNotes[id];saveTasks();save();saveNotes();render()}});
+$("assignOwnerForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  const taskId=$("assignTask").value;
+  let owner=$("assignNewOwner").value.trim()||$("assignOwnerSelect").value;
+  if(!taskId){$("manageMessage").textContent="Select an existing task first.";return}
+  if(!owner){$("manageMessage").textContent="Choose an owner or enter a new owner name.";return}
+  const task=T.find(t=>String(t.id)===taskId);
+  if(!task){$("manageMessage").textContent="The selected task could not be found.";return}
+  if(!owners.some(o=>o.toLowerCase()===owner.toLowerCase())){
+    owners.push(owner);
+    owners.sort((a,b)=>a.localeCompare(b));
+    saveOwners();
+  } else {
+    owner=owners.find(o=>o.toLowerCase()===owner.toLowerCase());
+  }
+  task.o=owner;
+  saveTasks();
+  refreshOwnerControls();
+  $("assignOwnerSelect").value=owner;
+  $("assignNewOwner").value="";
+  render();
+  $("manageMessage").textContent=`Assigned ${owner} to existing task ${task.id} in Goal ${task.g}.`;
+});
 $("ownerForm").addEventListener("submit",e=>{e.preventDefault();const name=$("newOwner").value.trim();if(!name)return;if(owners.some(o=>o.toLowerCase()===name.toLowerCase())){$("manageMessage").textContent="That owner already exists.";return}owners.push(name);owners.sort((a,b)=>a.localeCompare(b));saveOwners();refreshOwnerControls();$("newOwner").value="";$("manageMessage").textContent=`Owner added: ${name}`});
 $("deleteOwner").addEventListener("click",()=>{const name=$("removeOwner").value;if(!name)return;if(!confirm(`Delete owner "${name}"? Assigned tasks will become Unassigned.`))return;owners=owners.filter(o=>o!==name);T=T.map(t=>String(t.o||"").trim()===name?{...t,o:"Unassigned"}:t);if(!owners.includes("Unassigned")&&T.some(t=>t.o==="Unassigned"))owners.push("Unassigned");saveOwners();saveTasks();refreshOwnerControls();render();$("manageMessage").textContent=`Owner deleted: ${name}`});
 $("taskForm").addEventListener("submit",e=>{e.preventDefault();const g=+$("newTaskGoal").value,title=$("newTaskTitle").value.trim(),owner=$("newTaskOwner").value||"Unassigned",start=$("newTaskStart").value,finish=$("newTaskFinish").value;if(!title||!start||!finish)return;if(finish<start){$("manageMessage").textContent="Due date must be on or after the start date.";return}const s=excelDay(start),f=excelDay(finish);if(s<46204||f>46568){$("manageMessage").textContent="Please schedule the task within FY 2026–27 (1 Jul 2026 to 30 Jun 2027) to fit the existing Gantt chart.";return}const nums=T.filter(t=>t.g===g).map(t=>+(String(t.id).split(".")[1]||0));const id=`${g}.${Math.max(0,...nums)+1}`;T.push({id,g,t:title,o:owner,s,f});if(owner!=="Unassigned"&&!owners.includes(owner)){owners.push(owner);saveOwners()}saveTasks();$("taskForm").reset();$("newTaskStart").value="2026-07-01";$("newTaskFinish").value="2026-07-31";$("manageMessage").textContent=`Added task ${id} to Goal ${g}.`;render()});
