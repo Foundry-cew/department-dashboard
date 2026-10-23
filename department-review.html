@@ -55,7 +55,7 @@ function groupGoals(data){
   if(reason)g.blockers.push({id,title:taskTitle,reason,action});
  }
  return [...map.values()].map(g=>{
-  g.progress=g.values.length?Math.round(g.values.reduce((a,b)=>a+b,0)/g.values.length):0;
+  g.progress=g.actualWeighted;
   g.actualWeighted=g.totalWeight?Math.round(g.actualWeighted/g.totalWeight):0;
   g.plannedWeighted=g.totalWeight?Math.round(g.plannedWeighted/g.totalWeight):0;
   g.dueDate=g.latestFinish?new Date((g.latestFinish-25569)*86400000).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',timeZone:'UTC'}):'Not set';
