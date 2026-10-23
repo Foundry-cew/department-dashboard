@@ -431,8 +431,8 @@ onAuthStateChanged(auth, async (user) => {
     if (snapshot.exists()) {
       window.importFoundryState(window.foundryFromCloudSafe(snapshot.val()));
     } else {
-      // First login: upload this browser's existing dashboard state to the cloud.
-      await set(foundryRef, window.foundryToCloudSafe(window.exportFoundryState()));
+      // Preserve existing-data-first behavior: never initialize/overwrite cloud data from browser defaults.
+      throw new Error("No saved Foundry data exists in Firebase. Nothing was overwritten. Ask the administrator to verify the department data path.");
     }
     cloudReady = true;
     document.body.classList.add("authenticated");
