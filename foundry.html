@@ -148,13 +148,14 @@ body:not(.authenticated) .wrap{display:none}body.authenticated #loginPanel{displ
     </div>
     <div class="admin-card">
       <h3>Assign owner to an existing task</h3>
-      <div class="sub" style="margin-bottom:10px">Select an existing goal and task, then add an owner. Existing owners and all other task details will be preserved.</div>
+      <div class="sub" style="margin-bottom:10px">Select an existing goal and task, then add an owner or replace the current owner assignment. All other task details will be preserved.</div>
       <form id="assignOwnerForm"><div class="form-grid">
         <label class="f">Goal<select id="assignGoal" required></select></label>
         <label class="f">Existing task<select id="assignTask" required></select></label>
-        <label class="f">Owner to add<select id="assignOwner"></select></label>
-        <label class="f">Or enter a new owner<input id="assignNewOwner" maxlength="120" placeholder="Optional new owner"></label>
-      </div><button type="submit">Add owner to task</button></form>
+        <label class="f">Assignment action<select id="assignMode"><option value="add">Add owner (keep current owners)</option><option value="replace">Replace current owner(s)</option></select></label>
+        <label class="f">Owner to assign<select id="assignOwner"></select></label>
+        <label class="f full">Or enter a new owner<input id="assignNewOwner" maxlength="120" placeholder="Optional new owner"></label>
+      </div><button type="submit">Apply owner assignment</button></form>
     </div>
     <div class="admin-card">
       <h3>Add a task to a goal</h3>
@@ -403,18 +404,37 @@ $("assignOwnerForm").addEventListener("submit",e=>{
   owner=existing||owner;
   if(!owners.some(n=>canonicalOwnerName(n).toLowerCase()===owner.toLowerCase()))owners.push(owner);
   const current=splitOwnerNames(task.o||"");
-  if(current.some(n=>canonicalOwnerName(n).toLowerCase()===canonicalOwnerName(owner).toLowerCase())){
+  const mode=$("assignMode")?.value||"add";
+  if(mode==="add"&&current.some(n=>canonicalOwnerName(n).toLowerCase()===owner.toLowerCase())){
     $("manageMessage").textContent=`${owner} is already assigned to task ${task.id}.`;
     refreshOwnerControls();return;
   }
-  task.o=current.length?[...current,owner].join(" / "):owner;
-  owners=[...new Set(owners)].sort((a,b)=>a.localeCompare(b));
+  task.o=mode==="replace"?owner:(current.length?[...current,owner].join(" / "):owner);
+  owners=uniqueIndividualOwners([...owners,...T.map(t=>String(t.o||"Unassigned"))]);
   saveOwners();saveTasks();render();
   $("assignNewOwner").value="";
-  $("manageMessage").textContent=`Added ${owner} to existing task ${task.id}. Existing owners, progress, dates, and task details were preserved.`;
+  $("manageMessage").textContent=mode==="replace"
+    ? `Replaced the owner assignment for task ${task.id} with ${owner}. Progress, dates, and other task details were preserved.`
+    : `Added ${owner} to existing task ${task.id}. Existing owners, progress, dates, and task details were preserved.`;
 });
 $("ownerForm").addEventListener("submit",e=>{e.preventDefault();const name=$("newOwner").value.trim();if(!name)return;if(owners.some(o=>o.toLowerCase()===name.toLowerCase())){$("manageMessage").textContent="That owner already exists.";return}owners.push(name);owners.sort((a,b)=>a.localeCompare(b));saveOwners();refreshOwnerControls();$("newOwner").value="";$("manageMessage").textContent=`Owner added: ${name}`});
-$("deleteOwner").addEventListener("click",()=>{const name=$("removeOwner").value;if(!name)return;if(!confirm(`Delete owner "${name}"? Assigned tasks will become Unassigned.`))return;owners=owners.filter(o=>o!==name);T=T.map(t=>String(t.o||"").trim()===name?{...t,o:"Unassigned"}:t);if(!owners.includes("Unassigned")&&T.some(t=>t.o==="Unassigned"))owners.push("Unassigned");saveOwners();saveTasks();refreshOwnerControls();render();$("manageMessage").textContent=`Owner deleted: ${name}`});
+$("deleteOwner").addEventListener("click",()=>{
+  const name=$("removeOwner").value;
+  if(!name)return;
+  if(!confirm(`Delete owner "${name}"? This owner will be removed from existing task assignments. Tasks with no remaining owner will become Unassigned.`))return;
+  const target=canonicalOwnerName(name).toLowerCase();
+  owners=owners.filter(o=>canonicalOwnerName(o).toLowerCase()!==target);
+  T=T.map(t=>{
+    const current=splitOwnerNames(t.o||"");
+    if(!current.some(n=>canonicalOwnerName(n).toLowerCase()===target))return t;
+    const remaining=current.filter(n=>canonicalOwnerName(n).toLowerCase()!==target);
+    return {...t,o:remaining.length?uniqueIndividualOwners(remaining).join(" / "):"Unassigned"};
+  });
+  if(T.some(t=>t.o==="Unassigned")&&!owners.some(o=>o.toLowerCase()==="unassigned"))owners.push("Unassigned");
+  owners=uniqueIndividualOwners(owners);
+  saveOwners();saveTasks();refreshOwnerControls();render();
+  $("manageMessage").textContent=`Owner deleted: ${name}. Other owners on shared tasks were retained.`;
+});
 $("taskForm").addEventListener("submit",e=>{e.preventDefault();const g=+$("newTaskGoal").value,title=$("newTaskTitle").value.trim(),owner=$("newTaskOwner").value||"Unassigned",start=$("newTaskStart").value,finish=$("newTaskFinish").value;if(!title||!start||!finish)return;if(finish<start){$("manageMessage").textContent="Due date must be on or after the start date.";return}const s=excelDay(start),f=excelDay(finish);if(s<46204||f>46568){$("manageMessage").textContent="Please schedule the task within FY 2026–27 (1 Jul 2026 to 30 Jun 2027) to fit the existing Gantt chart.";return}const nums=T.filter(t=>t.g===g).map(t=>+(String(t.id).split(".")[1]||0));const id=`${g}.${Math.max(0,...nums)+1}`;T.push({id,g,t:title,o:owner,s,f});if(owner!=="Unassigned"&&!owners.includes(owner)){owners.push(owner);saveOwners()}saveTasks();$("taskForm").reset();$("newTaskStart").value="2026-07-01";$("newTaskFinish").value="2026-07-31";$("manageMessage").textContent=`Added task ${id} to Goal ${g}.`;render()});
 $("asof").onchange=render;
 $("reset").onclick=()=>{if(confirm("Set every task back to 0%?")){pct={};save();render()}};
