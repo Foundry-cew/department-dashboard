@@ -237,7 +237,31 @@ let T=[
 ["9.5","Roll out continuous monitoring (daily/weekly HSE checklist)","Amir Abbas / Nadeem Sb / Rohail Sb",46447,46568]
 ].map(a=>({id:a[0],g:+a[0].split(".")[0],t:a[1],o:a[2],s:a[3],f:a[4]}));
 const OWN=["Amir","Ijaz","Shahzaib","Nadeem","Uzaim","Farhan","Majeed","Touseef","Ahtsham","Rohail"];
-const ST={done:["Completed","var(--done)"],active:["In progress","var(--active)"],overdue:["Overdue","var(--over)"],later:["Not started","var(--later)"]};
+// Owner dropdowns use individual, canonical names; task assignment text is left unchanged.
+function canonicalOwnerName(value){
+  let name=String(value??"").trim().replace(/^engr\.?\s+/i,"").replace(/\s+/g," ");
+  name=name.replace(/\s+Sb\.?$/i,"").trim();
+  if(/^amir$/i.test(name)||/^amir abbas$/i.test(name)) return "Amir Abbas";
+  const known=["Ijaz","Shahzaib","Nadeem","Uzaim","Farhan","Majeed","Touseef","Ahtsham","Rohail","Amir Abbas"];
+  const match=known.find(n=>n.toLowerCase()===name.toLowerCase());
+  return match||name;
+}
+function splitOwnerNames(value){
+  const raw=String(value??"").trim();
+  if(!raw) return [];
+  return raw.split(/\s*\/\s*/).map(canonicalOwnerName).filter(Boolean);
+}
+function uniqueIndividualOwners(values){
+  const map=new Map();
+  for(const value of values||[]){
+    for(const name of splitOwnerNames(value)){
+      const key=name.toLocaleLowerCase();
+      if(!map.has(key)) map.set(key,name);
+    }
+  }
+  return [...map.values()].sort((a,b)=>a.localeCompare(b));
+}
+const ST={done:["Completed","var(--done)"],active:["In progress","var(--active)"],overdue:["Overdue","var(--over)"] ,later:["Not started","var(--later)"]};
 const KEY="foundry-kpi-progress-v1";
 let pct={},sel={s:"",o:"",g:""};
 try{pct=JSON.parse(localStorage.getItem(KEY)||"{}")||{}}catch(e){pct={}}
@@ -246,7 +270,7 @@ let owners=[],delayNotes={};
 try{const x=JSON.parse(localStorage.getItem(TASKS_KEY)||"null");if(Array.isArray(x))T=x}catch(e){}
 try{const x=JSON.parse(localStorage.getItem(OWNERS_KEY)||"[]");if(Array.isArray(x))owners=x}catch(e){}
 try{delayNotes=JSON.parse(localStorage.getItem(NOTES_KEY)||"{}")||{}}catch(e){delayNotes={}}
-owners=[...new Set([...OWN,...T.map(t=>String(t.o||"Unassigned").trim()),...owners].filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+owners=uniqueIndividualOwners([...OWN,...T.map(t=>String(t.o||"Unassigned").trim()),...owners]);
 const saveTasks=()=>{try{localStorage.setItem(TASKS_KEY,JSON.stringify(T))}catch(e){};window.queueFoundryCloudSave?.();}
 const saveOwners=()=>{try{localStorage.setItem(OWNERS_KEY,JSON.stringify(owners))}catch(e){};window.queueFoundryCloudSave?.();}
 const saveNotes=()=>{try{localStorage.setItem(NOTES_KEY,JSON.stringify(delayNotes))}catch(e){};window.queueFoundryCloudSave?.();}
@@ -265,9 +289,14 @@ const wavg=(list,fn)=>{const w=list.reduce((a,t)=>a+wt(t),0);return w?list.reduc
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(pct))}catch(e){};window.queueFoundryCloudSave?.();}
 
 function refreshOwnerControls(){
-  $("fo").innerHTML='<option value="">All owners</option>'+owners.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("");
+  // Preserve the active filter whenever the table rerenders or cloud data arrives.
+  const filter=$("fo"),previous=sel.o||filter.value||"";
+  owners=uniqueIndividualOwners([...OWN,...T.map(t=>String(t.o||"Unassigned").trim()),...owners]);
+  filter.innerHTML='<option value="">All owners</option>'+owners.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("");
+  filter.value=owners.some(n=>n.toLowerCase()===previous.toLowerCase())?owners.find(n=>n.toLowerCase()===previous.toLowerCase()):"";
+  sel.o=filter.value;
   $("removeOwner").innerHTML=owners.length?owners.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join(""):'<option value="">No owners</option>';
-  $("newTaskOwner").innerHTML='<option value="Unassigned">Unassigned</option>'+owners.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("");
+  $("newTaskOwner").innerHTML='<option value="Unassigned">Unassigned</option>'+owners.filter(n=>n.toLowerCase()!=="unassigned").map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("");
   if(typeof refreshAssignmentControls==="function")refreshAssignmentControls();
 }
 refreshOwnerControls();
@@ -321,8 +350,8 @@ function render(){
   const fc=T.filter(t=>{const s=stat(t,d);return s==="overdue"||(s!=="done"&&t.f-d<=7&&t.f>=d)||(s!=="done"&&t.s>d&&t.s-d<=7)}).sort((x,y)=>x.f-y.f);
   $("focus").innerHTML=fc.length?fc.map(t=>{const s=stat(t,d),lbl=s==="overdue"?`Overdue since ${fmt(t.f)}`:t.s>d?`Starts ${fmt(t.s)}`:`Due ${fmt(t.f)}`;
     return `<li><span class="tag ${s==="later"?"later":s}">${lbl}</span><span><b>${t.id}</b> ${t.t}<br><span class="mini">${t.o} · ${Math.round(P(t))}% complete</span></span></li>`}).join(""):'<li class="empty">Nothing overdue or due this week.</li>';
-  const rows=T.filter(t=>{const s=stat(t,d);
-    return (!sel.s||(sel.s==="remaining"?s!=="done":s===sel.s))&&(!sel.o||t.o.toLowerCase().includes(sel.o.toLowerCase()))&&(!sel.g||t.g==sel.g)});
+  const rows=T.filter(t=>{const s=stat(t,d),taskOwners=splitOwnerNames(t.o||"Unassigned").map(n=>n.toLowerCase());
+    return (!sel.s||(sel.s==="remaining"?s!=="done":s===sel.s))&&(!sel.o||taskOwners.includes(canonicalOwnerName(sel.o).toLowerCase()))&&(!sel.g||t.g==sel.g)});
   $("count").textContent=`Showing ${rows.length} of ${n}`;
   $("rows").innerHTML=rows.map(t=>{const s=stat(t,d),late=P(t)<100&&d>=t.f,nt=delayNotes[t.id]||{};
     return `<tr class="${s}"><td class="id">${esc(t.id)}</td><td>${esc(t.t)}</td><td>${esc(t.o||"Unassigned")}</td><td class="mini">${fmt(t.s)} – ${fmt(t.f)}</td><td>${plan(t,d)}%</td><td class="pc"><input type="number" min="0" max="100" step="5" value="${P(t)}" data-id="${esc(t.id)}" aria-label="Percent complete for task ${esc(t.id)}"> <button data-done="${esc(t.id)}" title="Mark 100%">✓</button></td><td><span class="tag ${s}">${ST[s][0]}</span></td><td class="notes-cell">${late?'<span class="mini">Due / overdue — record reason and recovery action</span>':'<span class="mini">Optional delay / recovery notes</span>'}<textarea data-note-id="${esc(t.id)}" data-note="reason" placeholder="Why is this task late?">${esc(nt.reason||"")}</textarea><textarea data-note-id="${esc(t.id)}" data-note="action" placeholder="Recovery action / measures to catch up">${esc(nt.action||"")}</textarea></td><td><button class="task-delete" data-delete-task="${esc(t.id)}">Delete task</button></td></tr>`}).join("")||'<tr><td colspan="9" class="empty">No tasks match these filters.</td></tr>';
@@ -348,7 +377,7 @@ window.importFoundryState=(data)=>{
   if(data&&typeof data==="object"){
     if(data.progress&&typeof data.progress==="object")pct=data.progress;
     if(Array.isArray(data.tasks)&&data.tasks.length)T=data.tasks;
-    if(Array.isArray(data.owners))owners=[...new Set([...OWN,...T.map(t=>String(t.o||"Unassigned").trim()),...data.owners].filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+    if(Array.isArray(data.owners))owners=uniqueIndividualOwners([...OWN,...T.map(t=>String(t.o||"Unassigned").trim()),...data.owners]);
     if(data.delayNotes&&typeof data.delayNotes==="object")delayNotes=data.delayNotes;
     try{localStorage.setItem(KEY,JSON.stringify(pct));localStorage.setItem(TASKS_KEY,JSON.stringify(T));localStorage.setItem(OWNERS_KEY,JSON.stringify(owners));localStorage.setItem(NOTES_KEY,JSON.stringify(delayNotes))}catch(e){}
     refreshOwnerControls();render();
@@ -358,7 +387,7 @@ $("rows").addEventListener("change",e=>{const i=e.target.dataset.id;if(i){pct[i]
 $("rows").addEventListener("click",e=>{const i=e.target.dataset.done;if(i){pct[i]=100;save();render()}});
 $("goals").addEventListener("click",e=>{const b=e.target.closest("[data-g]");if(b){sel.g=sel.g==b.dataset.g?"":b.dataset.g;$("fg").value=sel.g;render()}});
 $("fs").onchange=e=>{sel.s=e.target.value;render()};
-$("fo").onchange=e=>{sel.o=e.target.value;render()};
+$("fo").onchange=e=>{sel.o=e.target.value;render();$("fo").value=sel.o};
 $("fg").onchange=e=>{sel.g=e.target.value;render()};
 $("rows").addEventListener("input",e=>{const id=e.target.dataset.noteId,field=e.target.dataset.note;if(id&&field){delayNotes[id]=delayNotes[id]||{};delayNotes[id][field]=e.target.value;saveNotes()}});
 $("rows").addEventListener("click",e=>{const id=e.target.dataset.deleteTask;if(id&&confirm(`Delete task ${id}? This cannot be undone in this browser.`)){T=T.filter(t=>t.id!==id);delete pct[id];delete delayNotes[id];saveTasks();save();saveNotes();render()}});
@@ -369,11 +398,12 @@ $("assignOwnerForm").addEventListener("submit",e=>{
   const typed=$("assignNewOwner").value.trim();
   let owner=typed||$("assignOwner").value;
   if(!owner){$("manageMessage").textContent="Select an owner or enter a new owner name.";return;}
-  const existing=owners.find(n=>n.toLowerCase()===owner.toLowerCase());
+  owner=canonicalOwnerName(owner);
+  const existing=owners.find(n=>canonicalOwnerName(n).toLowerCase()===owner.toLowerCase());
   owner=existing||owner;
-  if(!owners.some(n=>n.toLowerCase()===owner.toLowerCase()))owners.push(owner);
-  const current=String(task.o||"").split(/\s*\/\s*/).map(n=>n.trim()).filter(Boolean);
-  if(current.some(n=>n.toLowerCase()===owner.toLowerCase())){
+  if(!owners.some(n=>canonicalOwnerName(n).toLowerCase()===owner.toLowerCase()))owners.push(owner);
+  const current=splitOwnerNames(task.o||"");
+  if(current.some(n=>canonicalOwnerName(n).toLowerCase()===canonicalOwnerName(owner).toLowerCase())){
     $("manageMessage").textContent=`${owner} is already assigned to task ${task.id}.`;
     refreshOwnerControls();return;
   }
