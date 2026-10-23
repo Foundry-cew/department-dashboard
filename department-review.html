@@ -5,7 +5,7 @@
 <script type="module">
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js';
 import {getAuth,onAuthStateChanged,signOut} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
-import {getDatabase,ref,get} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js';
+import {getDatabase,ref,onValue} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js';
 const firebaseConfig={apiKey:"AIzaSyCWBwb-lmErQ2Yb3C8uFR6uHzCmaWcFJ0A",authDomain:"foundry-department-dashboard.firebaseapp.com",databaseURL:"https://foundry-department-dashboard-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"foundry-department-dashboard",storageBucket:"foundry-department-dashboard.firebasestorage.app",messagingSenderId:"875228967719",appId:"1:875228967719:web:b5e96a39a706ba0dbd2f02"};
 const MANAGEMENT_UID='jQoHH8MYHtf8AB9SWjYNn1RJvCN2',app=initializeApp(firebaseConfig),auth=getAuth(app),db=getDatabase(app);
 const names={foundry:'Foundry',maintenance:'Maintenance',quality:'Quality','heat-treatment':'Heat Treatment'},params=new URLSearchParams(location.search),dept=(params.get('dept')||params.get('department')||'').trim().toLowerCase(),$=id=>document.getElementById(id);
@@ -16,7 +16,10 @@ function groupGoals(data){
  const tasks=Array.isArray(data?.tasks)?data.tasks:Object.values(data?.tasks||{});
  const saved=data?.pct||data?.progress||{},notes=data?.delayNotes||{};
  const progress={};
- for(const [k,v] of Object.entries(saved)) progress[String(k).replaceAll('_','.')]=Math.max(0,Math.min(100,Number(v)||0));
+ for(const [k,v] of Object.entries(saved)){
+  const value=Math.max(0,Math.min(100,Number(v)||0)),id=String(k).replaceAll('_','.');
+  progress[id]=value;progress[id.replaceAll('.','_')]=value;
+ }
  const today=Math.floor(Date.now()/86400000+25569);
  const map=new Map();
  for(let i=0;i<tasks.length;i++){
@@ -28,7 +31,8 @@ function groupGoals(data){
   const taskTitle=String(isArray?(rawTask[1]||('Task '+id)):(rawTask.t||rawTask.title||('Task '+id)));
   const start=Number(isArray?rawTask[3]:rawTask.s)||0;
   const finish=Number(isArray?rawTask[4]:rawTask.f)||0;
-  const p=progress[id]??Math.max(0,Math.min(100,Number(isArray?0:(rawTask.progress??rawTask.pct??rawTask.p??0))||0));
+  const direct=Number(isArray?0:(rawTask.progress??rawTask.pct??rawTask.p??0));
+  const p=progress[id]??progress[id.replaceAll('.','_')]??Math.max(0,Math.min(100,Number.isFinite(direct)?direct:0));
   let raw=isArray?id.split('.')[0]:(rawTask.g??rawTask.goalId??rawTask.goal??id.split('.')[0]);
   if(raw&&typeof raw==='object')raw=raw.id??raw.number??raw.title??'Other';
   const key=String(raw||'Other').replace(/^goal\s/i,'');
@@ -63,19 +67,26 @@ function groupGoals(data){
  }).sort((a,b)=>String(a.key).localeCompare(String(b.key),undefined,{numeric:true}));
 }
 $('title').textContent=(names[dept]||'Department')+' · Goal Review';
+let reviewUnsubscribe=null;
 onAuthStateChanged(auth,async user=>{
- if(!user||user.uid!==MANAGEMENT_UID){if(user)await signOut(auth);$('status').textContent='Management sign-in required. Return to Management and sign in first.';return;}
+ if(reviewUnsubscribe){reviewUnsubscribe();reviewUnsubscribe=null;}
+ if(!user||user.uid!==MANAGEMENT_UID){if(user)await signOut(auth);$('content').style.display='none';$('status').textContent='Management sign-in required. Return to Management and sign in first.';return;}
  if(!names[dept]){$('status').textContent='Unknown department.';return;}
- $('status').textContent='Loading latest saved goal progress…';
- try{
-  const snap=await get(ref(db,'departments/'+dept+'/dashboard'));
-  if(!snap.exists()){$('status').textContent='No saved data exists for this department yet.';return;}
-  const goals=groupGoals(snap.val()),done=goals.filter(g=>g.progress>=100).length,active=goals.filter(g=>g.progress>0&&g.progress<100).length,avg=goals.length?Math.round(goals.reduce((s,g)=>s+g.progress,0)/goals.length):0;
-  $('goals').textContent=goals.length;$('done').textContent=done;$('avg').textContent=avg+'%';$('active').textContent=active;
-  const blocked=goals.filter(g=>g.blockers.length).length,overdue=goals.filter(g=>g.overdueTasks.length).length,behind=goals.filter(g=>!g.blockers.length&&!g.overdueTasks.length&&g.status==='Behind plan').length,onTrack=goals.filter(g=>g.status==='On track').length;
-  $('riskSummary').innerHTML=`<strong>Management risk overview:</strong> ${blocked} blocked · ${overdue} overdue · ${behind} behind plan · ${onTrack} on track. <span class="muted">“Blocked” is based on a saved delay reason; add a reason in the department dashboard to surface a bottleneck.</span>`;
-  $('goalGrid').innerHTML=goals.map(g=>{const blockerHtml=g.blockers.length?`<div class="riskline"><strong>Bottlenecks / delays</strong><ul>${g.blockers.map(b=>`<li><b>${esc(b.id)} — ${esc(b.title)}:</b> ${esc(b.reason)}${b.action?` <span class="muted">Recovery: ${esc(b.action)}</span>`:''}</li>`).join('')}</ul></div>`:'';const overdueHtml=g.overdueTasks.length?`<div class="riskline"><strong>Overdue tasks (${g.overdueTasks.length})</strong><ul>${g.overdueTasks.slice(0,3).map(t=>`<li>${esc(t.id)} — ${esc(t.title)} (due ${new Date((t.finish-25569)*86400000).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',timeZone:'UTC'})})</li>`).join('')}${g.overdueTasks.length>3?`<li>…and ${g.overdueTasks.length-3} more</li>`:''}</ul></div>`:'';return `<article class="goal"><div class="goal-head"><div><div class="goal-id">Goal ${esc(g.key)}</div><h3>${esc(g.title||('Goal '+g.key))}</h3></div><div class="percent">${g.progress}%</div></div><div class="bar"><i style="width:${g.progress}%"></i></div><div class="goal-foot"><span>${g.doneTasks} / ${g.taskCount} linked tasks completed</span><span class="status-pill ${g.statusClass}">${g.status}</span></div><div class="goal-foot" style="margin-top:8px"><span>Actual task progress: ${g.actualWeighted}%</span><span>Planned by today: ${g.plannedWeighted}%</span><span>Latest task due: ${g.dueDate}</span></div>${blockerHtml}${overdueHtml}</article>`}).join('')||'<div class="empty">No goal/task records are stored for this department yet.</div>';
-  $('content').style.display='block';$('status').textContent='Live data loaded from Firebase. Read-only goal review.';
- }catch(err){$('status').textContent='Could not load data. Confirm Management read permissions in Firebase Rules. '+(err.code||err.message||'');}
+ $('status').textContent='Connecting to live Firebase data…';
+ reviewUnsubscribe=onValue(ref(db,'departments/'+dept+'/dashboard'),snap=>{
+  if(!snap.exists()){$('content').style.display='none';$('status').textContent='No saved data exists for this department yet.';return;}
+  try{
+   const goals=groupGoals(snap.val()),done=goals.filter(g=>g.progress>=100).length,active=goals.filter(g=>g.progress>0&&g.progress<100).length,avg=goals.length?Math.round(goals.reduce((s,g)=>s+g.progress,0)/goals.length):0;
+   $('goals').textContent=goals.length;$('done').textContent=done;$('avg').textContent=avg+'%';$('active').textContent=active;
+   const blocked=goals.filter(g=>g.blockers.length).length,overdue=goals.filter(g=>g.overdueTasks.length).length,behind=goals.filter(g=>!g.blockers.length&&!g.overdueTasks.length&&g.status==='Behind plan').length,onTrack=goals.filter(g=>g.status==='On track').length;
+   $('riskSummary').innerHTML=`<strong>Management risk overview:</strong> ${blocked} blocked · ${overdue} overdue · ${behind} behind plan · ${onTrack} on track. <span class="muted">“Blocked” is based on a saved delay reason; add a reason in the department dashboard to surface a bottleneck.</span>`;
+   $('goalGrid').innerHTML=goals.map(g=>{
+    const blockerHtml=g.blockers.length?`<div class="riskline"><strong>Bottlenecks / delays</strong><ul>${g.blockers.map(b=>`<li><b>${esc(b.id)} — ${esc(b.title)}:</b> ${esc(b.reason)}${b.action?` <span class="muted">Recovery: ${esc(b.action)}</span>`:''}</li>`).join('')}</ul></div>`:'';
+    const overdueHtml=g.overdueTasks.length?`<div class="riskline"><strong>Overdue tasks (${g.overdueTasks.length})</strong><ul>${g.overdueTasks.slice(0,3).map(t=>`<li>${esc(t.id)} — ${esc(t.title)} (due ${new Date((t.finish-25569)*86400000).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',timeZone:'UTC'})})</li>`).join('')}${g.overdueTasks.length>3?`<li>…and ${g.overdueTasks.length-3} more</li>`:''}</ul></div>`:'';
+    return `<article class="goal"><div class="goal-head"><div><div class="goal-id">Goal ${esc(g.key)}</div><h3>${esc(g.title||('Goal '+g.key))}</h3></div><div class="percent">${g.progress}%</div></div><div class="bar"><i style="width:${g.progress}%"></i></div><div class="goal-foot"><span>${g.doneTasks} / ${g.taskCount} linked tasks completed</span><span class="status-pill ${g.statusClass}">${g.status}</span></div><div class="goal-foot" style="margin-top:8px"><span>Actual task progress: ${g.actualWeighted}%</span><span>Planned by today: ${g.plannedWeighted}%</span><span>Latest task due: ${g.dueDate}</span></div>${blockerHtml}${overdueHtml}</article>`;
+   }).join('')||'<div class="empty">No goal/task records are stored for this department yet.</div>';
+   $('content').style.display='block';$('status').textContent='Live data connected · Updates automatically when the department saves changes.';
+  }catch(err){$('status').textContent='Could not process department data: '+(err.message||'Unknown data format');}
+ },err=>{$('status').textContent='Could not load data. Confirm Management read permissions in Firebase Rules. '+(err.code||err.message||'');});
 });
 </script></body></html>
