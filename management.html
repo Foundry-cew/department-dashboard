@@ -41,16 +41,21 @@ function normalizeData(data){
 }
 function goalGroups(data){
   const tasks=normalizeData(data), groups=new Map();
+  const today=Math.floor(Date.now()/86400000+25569);
   for(const t of tasks){
     let raw=t.g??t.goalId??t.goal??String(t.id).split('.')[0];
     if(raw&&typeof raw==='object')raw=raw.id??raw.number??raw.title??'';
-    let key=String(raw||'Other').replace(/^goal\\s/i,'');
-    let title=String(t.goalTitle??t.goalName??(typeof t.goal==='string'&&!/^\\d+(\\.\\d+)?$/.test(t.goal)?t.goal:'')).trim();
-    if(!groups.has(key))groups.set(key,{key,title,values:[],taskCount:0,doneTasks:0});
-    const g=groups.get(key);if(!g.title&&title)g.title=title;
-    g.values.push(t.p);g.taskCount++;if(t.p>=100)g.doneTasks++;
+    const key=String(raw||'Other').replace(/^goal\s/i,'');
+    const title=String(t.goalTitle??t.goalName??(typeof t.goal==='string'&&!/^\d+(\.\d+)?$/.test(t.goal)?t.goal:'')).trim();
+    if(!groups.has(key))groups.set(key,{key,title,taskCount:0,doneTasks:0,totalWeight:0,weightedProgress:0});
+    const g=groups.get(key);
+    if(!g.title&&title)g.title=title;
+    const start=Number(t.s)||0,finish=Number(t.f)||0;
+    const weight=Math.max(1,(finish||today)-(start||today)+1);
+    g.taskCount++;if(t.p>=100)g.doneTasks++;
+    g.totalWeight+=weight;g.weightedProgress+=t.p*weight;
   }
-  return [...groups.values()].map(g=>({...g,progress:g.values.length?Math.round(g.values.reduce((a,b)=>a+b,0)/g.values.length):0}))
+  return [...groups.values()].map(g=>({...g,progress:g.totalWeight?Math.round(g.weightedProgress/g.totalWeight):0}))
     .sort((a,b)=>String(a.key).localeCompare(String(b.key),undefined,{numeric:true}));
 }
 function summarize(data){const goals=goalGroups(data);return {goals,total:goals.length,done:goals.filter(g=>g.progress>=100).length,avg:goals.length?Math.round(goals.reduce((s,g)=>s+g.progress,0)/goals.length):0,hasData:goals.length>0}}
