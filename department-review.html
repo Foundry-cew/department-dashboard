@@ -58,7 +58,12 @@ function groupGoals(data){
   g.actualWeighted=g.totalWeight?Math.round(g.actualWeighted/g.totalWeight):0;
   g.progress=g.actualWeighted;
   g.plannedWeighted=g.totalWeight?Math.round(g.plannedWeighted/g.totalWeight):0;
-  g.dueDate=g.latestFinish?new Date((g.latestFinish-25569)*86400000).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',timeZone:'UTC'}):'Not set';
+  const dateLabel=excelDate=>excelDate?new Date((excelDate-25569)*86400000).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',timeZone:'UTC'}):'Not set';
+  g.dueDate=dateLabel(g.latestFinish);
+  // Show the due date of the currently active task, rather than repeating the goal progress percentage.
+  const currentTask=g.tasks.filter(t=>t.p>0&&t.p<100&&t.finish).sort((a,b)=>a.finish-b.finish)[0]
+    ||g.tasks.filter(t=>t.p<100&&t.finish).sort((a,b)=>a.finish-b.finish)[0];
+  g.currentTaskDate=currentTask?dateLabel(currentTask.finish):'No open task';
   if(g.blockers.length){g.status='Blocked';g.statusClass='blocked';}
   else if(g.overdueTasks.length){g.status='Overdue';g.statusClass='overdue';}
   else if(g.actualWeighted<g.plannedWeighted-10){g.status='Behind plan';g.statusClass='risk';}
@@ -83,7 +88,7 @@ onAuthStateChanged(auth,async user=>{
    $('goalGrid').innerHTML=goals.map(g=>{
     const blockerHtml=g.blockers.length?`<div class="riskline"><strong>Bottlenecks / delays</strong><ul>${g.blockers.map(b=>`<li><b>${esc(b.id)} — ${esc(b.title)}:</b> ${esc(b.reason)}${b.action?` <span class="muted">Recovery: ${esc(b.action)}</span>`:''}</li>`).join('')}</ul></div>`:'';
     const overdueHtml=g.overdueTasks.length?`<div class="riskline"><strong>Overdue tasks (${g.overdueTasks.length})</strong><ul>${g.overdueTasks.slice(0,3).map(t=>`<li>${esc(t.id)} — ${esc(t.title)} (due ${new Date((t.finish-25569)*86400000).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',timeZone:'UTC'})})</li>`).join('')}${g.overdueTasks.length>3?`<li>…and ${g.overdueTasks.length-3} more</li>`:''}</ul></div>`:'';
-    return `<article class="goal"><div class="goal-head"><div><div class="goal-id">Goal ${esc(g.key)}</div><h3>${esc(g.title||('Goal '+g.key))}</h3></div><div class="percent">${g.progress}%</div></div><div class="bar"><i style="width:${g.progress}%"></i></div><div class="goal-foot"><span>${g.doneTasks} / ${g.taskCount} linked tasks completed</span><span class="status-pill ${g.statusClass}">${g.status}</span></div><div class="goal-foot" style="margin-top:8px"><span>Actual task progress: ${g.actualWeighted}%</span><span>Planned by today: ${g.plannedWeighted}%</span><span>Latest task due: ${g.dueDate}</span></div>${blockerHtml}${overdueHtml}</article>`;
+    return `<article class="goal"><div class="goal-head"><div><div class="goal-id">Goal ${esc(g.key)}</div><h3>${esc(g.title||('Goal '+g.key))}</h3></div><div class="percent">${g.progress}%</div></div><div class="bar"><i style="width:${g.progress}%"></i></div><div class="goal-foot"><span>${g.doneTasks} / ${g.taskCount} linked tasks completed</span><span class="status-pill ${g.statusClass}">${g.status}</span></div><div class="goal-foot" style="margin-top:8px"><span>Current task last date: ${esc(g.currentTaskDate)}</span><span>Planned by today: ${g.plannedWeighted}%</span><span>Goal Last date: ${esc(g.dueDate)}</span></div>${blockerHtml}${overdueHtml}</article>`;
    }).join('')||'<div class="empty">No goal/task records are stored for this department yet.</div>';
    $('content').style.display='block';$('status').textContent='Live data connected · Updates automatically when the department saves changes.';
   }catch(err){$('status').textContent='Could not process department data: '+(err.message||'Unknown data format');}
