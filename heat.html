@@ -157,7 +157,6 @@ T = DATA.tasks.map(t => ({ ...t }));
 
   let sel={s:"",o:"",g:""};
 owners=[]; delayNotes={};
-owners=[...new Set([...T.flatMap(t=>ownerTokens(t.o)),...owners.flatMap(ownerTokens)].filter(Boolean).map(canonicalOwner))].sort((a,b)=>a.localeCompare(b));
 const saveTasks=()=>persistCloud();
 const saveOwners=()=>persistCloud();
 const saveNotes=()=>persistCloud();
@@ -207,6 +206,7 @@ function ownerTokens(value){
   }
   return [...new Set(found.map(canonicalOwner).filter(Boolean))];
 }
+owners=[...new Set([...T.flatMap(t=>ownerTokens(t.o)),...owners.flatMap(ownerTokens)].filter(Boolean).map(canonicalOwner))].sort((a,b)=>a.localeCompare(b));
 function refreshOwnerControls(){
 const selectedOwner=sel.o;
 owners=[...new Set([...owners,...T.flatMap(t=>ownerTokens(t.o))].filter(Boolean))].sort((a,b)=>a.localeCompare(b));
