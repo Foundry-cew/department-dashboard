@@ -19,13 +19,8 @@ td.notes-cell textarea{display:block;width:100%;min-width:220px;min-height:54px;
 td.notes-cell .mini{font-weight:600}
 .task-delete{padding:3px 7px;color:var(--over);border-color:var(--over);margin-top:5px}
 @media(max-width:760px){.admin-grid{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.form-grid .full{grid-column:auto}}
-
-#loginPanel{max-width:420px;margin:8vh auto;padding:24px;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 28px #0001}
-#loginPanel h1{margin-bottom:8px}#loginForm{display:grid;gap:12px;margin-top:18px}#loginForm label{display:grid;gap:5px;color:var(--mute);font-size:13px}#loginForm input{width:100%;padding:10px}#loginForm button{padding:10px 14px;background:var(--done);color:#fff;border:0;font-weight:600}#loginError{color:var(--over);font-size:13px;min-height:18px}#cloudStatus{font-size:12px;color:var(--mute);margin-top:8px}
-</style></head><body>
-<section id="loginPanel"><h1>Maintenance Dashboard Login</h1><div class="sub">Sign in with the Maintenance department account.</div><form id="loginForm"><label>Email address<input id="loginEmail" type="email" autocomplete="username" required></label><label>Password<input id="loginPassword" type="password" autocomplete="current-password" required></label><button type="submit" id="loginButton">Sign in</button><div id="loginError" role="alert"></div></form><div class="note">Use your department account. Do not share your password.</div></section>
-<div id="dashboardApp" style="display:none"><div class="wrap">
-<header><div><h1>Maintenance Goals & Weekly Review</h1><div class="sub">FY 2026-27 · Combined Maintenance · 11 goals, 49 tasks</div></div><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end"><label class="f">Review date<input type="date" id="asof"></label><button id="reset">Reset progress</button><button id="logoutButton" type="button">Sign out</button></div></header><div id="cloudStatus" class="note">Loading online data…</div>
+</style></head><body><div class="wrap">
+<header><div><h1>Maintenance Goals & Weekly Review</h1><div class="sub">FY 2026-27 · Combined Maintenance · 11 goals, 49 tasks</div></div><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end"><label class="f">Review date<input type="date" id="asof"></label><button id="reset">Reset progress</button></div></header>
 <section class="panel hero"><div><div class="big" id="bigline"></div><div class="stack" id="stack"></div><div class="legend" id="legend"></div></div><div class="side"><div class="sub">Task progress weighted by scheduled duration</div><div class="pair"><div><div class="num" id="actual"></div><span>Actual</span></div><div><div class="num" id="planned"></div><span>Planned by review date</span></div></div><div class="bar" style="margin-top:14px"><i id="abar"></i><u id="pbar"></u></div><div class="note" id="gap"></div></div></section>
 <section class="panel"><h2>Progress by goal</h2><div id="goals"></div><div class="note">The marker shows planned progress. Select a goal to filter tasks.</div></section>
 <section class="panel"><h2>Gantt chart</h2><div class="sub" style="margin-bottom:10px">Bars show scheduled task dates and completion. The red line marks the review date.</div><div class="scroll"><div id="gantt" class="gantt"></div></div></section>
@@ -33,7 +28,7 @@ td.notes-cell .mini{font-weight:600}
 
 <section class="panel" id="managePanel">
 <h2>Manage owners &amp; tasks</h2>
-<div class="sub" style="margin-bottom:12px">Add or remove owner entries and add extra tasks to any existing maintenance goal. Changes are saved online to Firebase.</div>
+<div class="sub" style="margin-bottom:12px">Add or remove owner entries and add extra tasks to any existing maintenance goal. Changes are saved in this browser.</div>
 <div class="admin-grid">
   <div class="admin-card">
     <h3>Owner management</h3>
@@ -47,18 +42,19 @@ td.notes-cell .mini{font-weight:600}
     </div>
     <div class="note">Deleting an owner removes that exact owner entry from the owner list. Tasks already assigned to that entry are changed to “Unassigned” so no task is lost.</div>
   </div>
+
   <div class="admin-card">
     <h3>Assign owner to an existing task</h3>
+    <div class="sub" style="margin-bottom:10px">Select a goal and existing task, then assign an existing or newly entered owner. This does not create a task or change its dates, progress, deliverable, or milestone.</div>
     <form id="assignOwnerForm">
       <div class="form-grid">
         <label class="f">Goal<select id="assignGoal" required></select></label>
-        <label class="f">Task<select id="assignTask" required></select></label>
-        <label class="f full">Owner<select id="assignOwnerSelect" required></select></label>
-        <label class="f full">Or add a new owner<input id="assignNewOwner" maxlength="120" placeholder="Optional: enter a new owner name"></label>
+        <label class="f">Existing task<select id="assignTask" required></select></label>
+        <label class="f">Select owner<select id="assignOwner"></select></label>
+        <label class="f">Or enter new owner<input id="assignNewOwner" maxlength="120" placeholder="Optional new owner"></label>
       </div>
-      <button type="submit">Save owner assignment</button>
+      <button type="submit">Assign owner</button>
     </form>
-    <div class="note">Choose a goal and an existing task, then assign its owner. This does not create a new task or change progress, dates, deliverables, milestones, or delay notes.</div>
   </div>
   <div class="admin-card">
     <h3>Add a task to a goal</h3>
@@ -79,76 +75,24 @@ td.notes-cell .mini{font-weight:600}
 <div class="note" id="manageMessage" aria-live="polite"></div>
 </section>
 
-<section class="panel"><h2>All maintenance tasks</h2><div class="tbar"><label class="f">Status<select id="fs"><option value="">All</option><option value="remaining">Remaining</option><option value="done">Completed</option><option value="overdue">Overdue</option><option value="active">In progress</option><option value="later">Not started</option></select></label><label class="f">Owner<select id="fo"></select></label><label class="f">Goal<select id="fg"></select></label><span class="mini" id="count"></span></div><div class="scroll"><table><thead><tr><th>ID</th><th>Goal / Task</th><th>Owner</th><th>Schedule</th><th>Planned</th><th>% complete</th><th>Status</th><th>Deliverable / Milestone</th><th>Delay reason / recovery action</th><th>Manage</th></tr></thead><tbody id="rows"></tbody></table></div><div class="note">Update % complete during each review. Progress, owner/task changes, and delay notes are saved online to Firebase.</div></section></div></div>
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, setPersistence, inMemoryPersistence, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyCWBwb-lmErQ2Yb3C8uFR6uHzCmaWcFJ0A",
-  authDomain: "foundry-department-dashboard.firebaseapp.com",
-  databaseURL: "https://foundry-department-dashboard-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "foundry-department-dashboard",
-  storageBucket: "foundry-department-dashboard.firebasestorage.app",
-  messagingSenderId: "875228967719",
-  appId: "1:875228967719:web:b5e96a39a706ba0dbd2f02"
-};
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getDatabase(app);
-const MAINTENANCE_UID = "mtfe65LfRjMoshsWSMgS2yNAp192";
-const DASHBOARD_PATH = "departments/maintenance/dashboard";
-let cloudReady = false;
-let cloudWriteTimer;
-let pct = {};
-let T = [];
-let owners = [];
-let delayNotes = {};
-const firebaseSafeMap = obj => Object.fromEntries(Object.entries(obj || {}).map(([k,v]) => [String(k).replaceAll('.', '_'), v]));
-const restoreTaskKeys = obj => Object.fromEntries(Object.entries(obj || {}).map(([k,v]) => [String(k).replaceAll('_', '.'), v]));
-
-function persistCloud(){
-  if(!cloudReady || !auth.currentUser || auth.currentUser.uid !== MAINTENANCE_UID) return;
-  clearTimeout(cloudWriteTimer);
-  cloudWriteTimer = setTimeout(async()=>{
-    try {
-      await set(ref(db, DASHBOARD_PATH), { pct: firebaseSafeMap(pct), tasks:T, owners, delayNotes: firebaseSafeMap(delayNotes) });
-      const status=document.getElementById("cloudStatus"); if(status) status.textContent="Saved online · "+new Date().toLocaleTimeString();
-    } catch(err) {
-      const status=document.getElementById("cloudStatus"); if(status) status.textContent="Save failed: "+err.message;
-    }
-  }, 250);
-}
-
-const loginPanel=document.getElementById("loginPanel");
-const dashboardApp=document.getElementById("dashboardApp");
-const loginForm=document.getElementById("loginForm");
-const loginError=document.getElementById("loginError");
-loginForm.addEventListener("submit", async e=>{
-  e.preventDefault(); loginError.textContent="";
-  const button=document.getElementById("loginButton"); button.disabled=true; button.textContent="Signing in…";
-  try {
-    const credential=await signInWithEmailAndPassword(auth, document.getElementById("loginEmail").value.trim(), document.getElementById("loginPassword").value);
-    if(credential.user.uid !== MAINTENANCE_UID){ await signOut(auth); throw new Error("This account is not authorized for the Maintenance dashboard."); }
-    loginPanel.style.display="none"; dashboardApp.style.display="block";
-    await startDashboard();
-  } catch(err) { loginError.textContent=err.message || "Unable to sign in. Check the account details."; }
-  finally { button.disabled=false; button.textContent="Sign in"; }
-});
-// Require a fresh login each time the page is opened.
-try { await setPersistence(auth, inMemoryPersistence); await signOut(auth); } catch(e) { console.warn("Auth initialization:",e); }
-
-async function startDashboard(){
+<section class="panel"><h2>All maintenance tasks</h2><div class="tbar"><label class="f">Status<select id="fs"><option value="">All</option><option value="remaining">Remaining</option><option value="done">Completed</option><option value="overdue">Overdue</option><option value="active">In progress</option><option value="later">Not started</option></select></label><label class="f">Owner<select id="fo"></select></label><label class="f">Goal<select id="fg"></select></label><span class="mini" id="count"></span></div><div class="scroll"><table><thead><tr><th>ID</th><th>Goal / Task</th><th>Owner</th><th>Schedule</th><th>Planned</th><th>% complete</th><th>Status</th><th>Deliverable / Milestone</th><th>Delay reason / recovery action</th><th>Manage</th></tr></thead><tbody id="rows"></tbody></table></div><div class="note">Update % complete during each review. Progress, owner/task changes, and delay notes are saved in this browser only.</div></section></div>
+<script>
 const DATA={"goals": [{"id": 1, "title": "Implement Overall Equipment Effectiveness (OEE) tracking across the maintenance domain, with full transition to digital OEE data entry in the company's ERP system."}, {"id": 2, "title": "Develop and deploy a DMMS (Digital Maintenance Management System) framework covering preventive maintenance scheduling, work order tracking, and spare parts management."}, {"id": 3, "title": "Implement Reliability Centered Maintenance (RCM) methodology across the foundry, achieving at least 50% coverage of assets."}, {"id": 4, "title": "Improve KPIs i.e. reduce maintenance cost per ton, MTTR, and MTBF by 10% against the FY2025-26 baseline."}, {"id": 5, "title": "Identify, execute, and close at least 3 improvement projects in maintenance, each with documented cost or efficiency impact."}, {"id": 6, "title": "Make the recycled greensand cooling system functional."}, {"id": 7, "title": "Improve the compressed Air lines and reduce the consumption."}, {"id": 8, "title": "Expand IoT-based condition monitoring by installing and commissioning devices on additional critical assets."}, {"id": 9, "title": "Achieve 20% implementation of Energy Policy initiatives relevant to maintenance (e.g., compressed air leak reduction, motor efficiency upgrades, insulation improvements)."}, {"id": 10, "title": "Integrate all existing and newly installed IoT devices with ERP system for centralized, real time monitoring and reporting."}, {"id": 11, "title": "Develop strategy for in-house monitoring (only) for induction furnace outsourced for maintenance"}], "tasks": [{"id": "1.1", "g": 1, "t": "Define OEE scope and calculation basis", "o": "Engr Amir Abbas          Engr Touseef Ghalib         Engr Ahtasham Khurshid", "s": 46204, "f": 46239, "p": 100, "deliverable": "Documented report of approved OEE parameters", "milestone": "OEE Framework Defined"}, {"id": "1.2", "g": 1, "t": "Standardize downtime reason codes and cycle times", "o": "Engr Amir Abbas          Engr Touseef Ghalib         Engr Ahtasham Khurshid", "s": 46240, "f": 46276, "p": 100, "deliverable": "Downtime Reason Codes & Cycle Time Standards", "milestone": ""}, {"id": "1.3", "g": 1, "t": "Run a manual OEE logging trial", "o": "Engr Amir Abbas          Engr Touseef Ghalib         Engr Ahtasham Khurshid", "s": 46277, "f": 46313, "p": 80, "deliverable": "Final version of OEE dashboard", "milestone": "Baseline Established"}, {"id": "1.4", "g": 1, "t": "Build OEE capture & reporting in the ERP", "o": "Engr Touseef Ghalib       Mr.Farhan Ahmad", "s": 46314, "f": 46350, "p": 0, "deliverable": "System: ERP-Integrated OEE Capture & Reporting", "milestone": "ERP Integration & Monitoring Live"}, {"id": "1.5", "g": 1, "t": "Launch fully functional OEE module in ERP, scaled to current requirements", "o": "Engr Touseef Ghalib       Mr.Farhan Ahmad", "s": 46351, "f": 46387, "p": 0, "deliverable": "Final report on fully functional module", "milestone": ""}, {"id": "2.1", "g": 2, "t": "Finalize DMMS scope and requirements", "o": "Engr Touseef Ghalib       Engr Ahtahsham Khurshid", "s": 46204, "f": 46249, "p": 100, "deliverable": "Approved DMMS requirements document", "milestone": "DMMS framework approved"}, {"id": "2.2", "g": 2, "t": "Design framework, workflows and master data", "o": "Engr Touseef Ghalib       Engr Ahtahsham Khurshid", "s": 46250, "f": 46295, "p": 100, "deliverable": "DMMS framework and workflow document", "milestone": "Framework design complete"}, {"id": "2.3", "g": 2, "t": "Configure and pilot PM scheduling and work order tracking", "o": "Engr Touseef Ghalib       Mr.Farhan Ahmad", "s": 46296, "f": 46341, "p": 0, "deliverable": "Pilot report (PM and work order modules)", "milestone": "PM and work order modules piloted"}, {"id": "2.4", "g": 2, "t": "Configure spare parts management, train users, go live", "o": "Engr Touseef Ghalib       Engr Ahtahsham Khurshid Mr Farhan Ahmad", "s": 46342, "f": 46418, "p": 0, "deliverable": "DMMS go-live report and training record", "milestone": "DMMS live with spare parts management"}, {"id": "3.1", "g": 3, "t": "Rank assets by criticality and prepare asset register", "o": "Engr Ahtasham Khurshid", "s": 46204, "f": 46279, "p": 80, "deliverable": "Criticality-ranked asset list", "milestone": "Asset list and RCM team ready"}, {"id": "3.2", "g": 3, "t": "Form RCM team and train on RCM / FMEA", "o": "Engr Ahtasham Khurshid", "s": 46280, "f": 46355, "p": 70, "deliverable": "Team roster and training records", "milestone": "RCM team trained"}, {"id": "3.3", "g": 3, "t": "Complete RCM analysis on Phase 1 assets (about 25%)", "o": "Foundry Team", "s": 46356, "f": 46431, "p": 0, "deliverable": "FMEA worksheets and updated PM tasks", "milestone": "25% asset coverage reached"}, {"id": "3.4", "g": 3, "t": "Extend RCM to Phase 2 (total 50% or more of assets)", "o": "Electrical & Mechanical", "s": 46432, "f": 46507, "p": 0, "deliverable": "Coverage report showing 50% or more", "milestone": "50% asset coverage achieved"}, {"id": "4.1", "g": 4, "t": "Confirm FY2025-26 baselines: cost per ton, MTTR, MTBF", "o": "Engr Touseef Ghalib       Engr Ahtahsham Khurshid", "s": 46204, "f": 46294, "p": 100, "deliverable": "Signed-off baseline report", "milestone": "Baseline and targets approved"}, {"id": "4.2", "g": 4, "t": "Set 10% targets and monthly KPI tracking sheet", "o": "Engr Touseef Ghalib       Engr Ahtahsham Khurshid", "s": 46295, "f": 46385, "p": 40, "deliverable": "Target sheet and KPI dashboard", "milestone": "KPI targets established"}, {"id": "4.3", "g": 4, "t": "Quarterly KPI review and corrective actions", "o": "Engr Touseef Ghalib       Engr Ahtahsham Khurshid", "s": 46386, "f": 46476, "p": 0, "deliverable": "Quarterly review reports (Q1 to Q4)", "milestone": "Quarterly checkpoints completed"}, {"id": "4.4", "g": 4, "t": "Year-end evaluation against baseline", "o": "Engr Touseef Ghalib       Engr Ahtahsham Khurshid", "s": 46477, "f": 46568, "p": 0, "deliverable": "Final KPI achievement report", "milestone": "10% improvement demonstrated"}, {"id": "5.1", "g": 5, "t": "Establish the FY25–26  baseline including Kwh,cost/Ton", "o": "Engr Amir Abbas          Engr Touseef Ghalib         Engr Ahtasham Khurshid", "s": 46204, "f": 46249, "p": 100, "deliverable": "Approved Foundry Cost Baseline & Cost/Ton Report", "milestone": "Cost Baseline Established"}, {"id": "5.2", "g": 5, "t": "Conduct feasibility study and establish target consumption/cost for FY26–27 ", "o": "Engr Amir Abbas          Engr Touseef Ghalib         Engr Ahtasham Khurshid", "s": 46250, "f": 46280, "p": 100, "deliverable": "Current-state study,consumption baseline, process trial plan and business case", "milestone": ""}, {"id": "5.3", "g": 5, "t": "Define and get approval of  all Projects ", "o": "Engr Amir Abbas          Engr Touseef Ghalib         Engr Ahtasham Khurshid", "s": 46281, "f": 46310, "p": 100, "deliverable": "Two approved project charters", "milestone": "Projects approved"}, {"id": "5.4", "g": 5, "t": "Consolidate cost / efficiency impact of three projects", "o": "Engr Touseef Ghalib       Engr Ahtahsham Khurshid", "s": 46311, "f": 46341, "p": 5, "deliverable": "Impact summary report", "milestone": "Impact documented"}, {"id": "5.5", "g": 5, "t": "PROJECT 1: Reduction of unit consumption upto 5 to 7% of furnaces from baseline melting consumption", "o": "Engr Amir Abbas          Engr Touseef Ghalib         Engr Ahtasham Khurshid", "s": 46204, "f": 46568, "p": 15, "deliverable": "Consumption reduction report with % improvement", "milestone": "10% reduction verified"}, {"id": "5.6", "g": 5, "t": "PROJECT 2: Installation of VFD on 55kW compressor to make it VSD rather than load off load", "o": "Engr Touseef Ghalib       Engr Ahtahsham Khurshid", "s": 46296, "f": 46418, "p": 15, "deliverable": "Installation, commissioning & energy savings report", "milestone": "VFD operational with savings verified"}, {"id": "5.7", "g": 5, "t": "PROJECT 3: Optimization of sand Plant to reduce overheads and make it align with all system with PLC", "o": "Engr Touseef Ghalib       Engr Ahtahsham Khurshid", "s": 46266, "f": 46474, "p": 10, "deliverable": "PLC programming, commissioning & overhead reduction analysis", "milestone": "Sand plant operational with PLC; savings verified"}, {"id": "6.1", "g": 6, "t": "Document current status of Coolant Passage (Section 2) and list what is missing, incl. PLC temperature control", "o": "Engr Touseef Ghalib       Engr Ahtahsham Khurshid", "s": 46204, "f": 46295, "p": 100, "deliverable": "Status and gap report for Section 2", "milestone": "Gaps identified and OEM visit approved"}, {"id": "6.2", "g": 6, "t": "Arrange OEM (Chinese engineer) visit: scope, cost approval, invitation and visa", "o": "Management", "s": 46296, "f": 46355, "p": 0, "deliverable": "Approved visit scope, PO / contract and visit schedule", "milestone": "OEM visit scheduled"}, {"id": "6.3", "g": 6, "t": "Prepare site for visit: mechanical readiness, sensors, PLC I/O, utilities, manpower", "o": "Engr Touseef Ghalib       Engr Ahtahsham Khurshid", "s": 46356, "f": 46385, "p": 0, "deliverable": "Site readiness checklist signed off", "milestone": "Site ready for engineer visit"}, {"id": "6.4", "g": 6, "t": "OEM engineer establishes PLC temperature control; commission and trial run", "o": "OEM Engineer", "s": 46386, "f": 46415, "p": 0, "deliverable": "Commissioning and trial-run report", "milestone": "PLC temperature control established and commissioned"}, {"id": "6.5", "g": 6, "t": "Stabilize operation, take PLC program backup, prepare SOP and train operators", "o": "Engr Touseef Ghalib       Engr Ahtahsham Khurshid OEM Engineer  ", "s": 46416, "f": 46446, "p": 0, "deliverable": "Section 2 operational; SOP, PLC backup and training record", "milestone": "Coolant Passage (Section 2) operational and handed over"}, {"id": "7.1", "g": 7, "t": "Check all connections on Air lines and survey leaks", "o": "Electrical & Mechanical", "s": 46235, "f": 46280, "p": 100, "deliverable": "Leak and connection survey report", "milestone": "Survey and baseline completed"}, {"id": "7.2", "g": 7, "t": "Measure baseline consumption and set reduction target", "o": "Engr Touseef Ghalib       Engr Ahtahsham Khurshid", "s": 46281, "f": 46325, "p": 50, "deliverable": "Baseline and agreed target", "milestone": "Baseline established"}, {"id": "7.3", "g": 7, "t": "Repair leaks and connections, isolate unused lines", "o": "Electrical & Mechanical", "s": 46327, "f": 46371, "p": 0, "deliverable": "Leak repair log", "milestone": "Leaks rectified"}, {"id": "7.4", "g": 7, "t": "Re-measure consumption and set up periodic audits", "o": "Engr Touseef Ghalib       Engr Ahtahsham Khurshid", "s": 46372, "f": 46418, "p": 0, "deliverable": "Consumption reduction report and audit schedule", "milestone": "Reduction verified"}, {"id": "8.1", "g": 8, "t": "Select additional critical assets for IoT- based Meter", "o": "Engr Touseef Ghalib       Engr Ahtahsham Khurshid", "s": 46235, "f": 46318, "p": 100, "deliverable": "Approved asset list", "milestone": "Assets and devices finalized"}, {"id": "8.2", "g": 8, "t": "Specify and procure sensors and devices", "o": "Engr Touseef Ghalib        Mr Usman", "s": 46299, "f": 46370, "p": 40, "deliverable": "Specifications and purchase orders", "milestone": "Equipment procured"}, {"id": "8.3", "g": 8, "t": "Install and commission devices, connect to monitoring", "o": "Engr Touseef Ghalib       Engr Ahtahsham Khurshid", "s": 46341, "f": 46485, "p": 0, "deliverable": "Commissioning report", "milestone": "Devices commissioned"}, {"id": "8.4", "g": 8, "t": "Set alarm thresholds and review performance", "o": "Engr Touseef Ghalib       Engr Ahtahsham Khurshid", "s": 46486, "f": 46538, "p": 0, "deliverable": "Monitoring review report", "milestone": "Monitoring operational on new assets"}, {"id": "9.1", "g": 9, "t": "List relevant Energy Policy initiatives and record baseline and establishment of Energy Tree", "o": "Engr Touseef Ghalib       Engr Ahtahsham Khurshid", "s": 46286, "f": 46347, "p": 100, "deliverable": "Initiative register", "milestone": "Implementation plan approved"}, {"id": "9.2", "g": 9, "t": "Set 20% target and implementation plan", "o": "Engr Touseef Ghalib       Engr Ahtahsham Khurshid", "s": 46348, "f": 46370, "p": 0, "deliverable": "Approved implementation plan", "milestone": "Plan finalized"}, {"id": "9.3", "g": 9, "t": "Implement: air leak reduction, motor efficiency, insulation", "o": "Engr Touseef Ghalib       Engr Ahtahsham Khurshid", "s": 46371, "f": 46454, "p": 0, "deliverable": "Quarterly progress reports", "milestone": "10% implemented (half of target)"}, {"id": "9.4", "g": 9, "t": "Verify 20% implementation achieved", "o": "Engr Touseef Ghalib       Engr Ahtahsham Khurshid             ", "s": 46455, "f": 46538, "p": 0, "deliverable": "Energy Policy achievement report", "milestone": "20% implemented"}, {"id": "10.1", "g": 10, "t": "Audit all existing IoT devices and prepare integration roadmap", "o": "Engr Touseef Ghalib       Engr Ahtahsham Khurshid              Adnan Yousaf", "s": 46204, "f": 46309, "p": 100, "deliverable": "Device inventory and integration plan document", "milestone": "Integration roadmap approved"}, {"id": "10.2", "g": 10, "t": "Configure ERP modules for IoT data ingestion and real-time dashboard", "o": "Engr Touseef Ghalib       Engr Ahtahsham Khurshid          Mr. Farhan Ahmad     ", "s": 46270, "f": 46387, "p": 80, "deliverable": "ERP configuration document and test results", "milestone": "ERP modules configured"}, {"id": "10.3", "g": 10, "t": "Integrate devices with ERP system; test data flow", "o": "Engr Touseef Ghalib       Engr Ahtahsham Khurshid          Adnan Yousaf                   Mr. Farhan Ahmad     ", "s": 46296, "f": 46341, "p": 40, "deliverable": "Integration testing report", "milestone": "Devices integrated successfully"}, {"id": "10.4", "g": 10, "t": "Commission centralized monitoring dashboard; train operators", "o": "Engr Touseef Ghalib       Engr Ahtahsham Khurshid          Adnan Yousaf                   Mr. Farhan Ahmad     ", "s": 46281, "f": 46507, "p": 0, "deliverable": "Dashboard operational; training records", "milestone": "Real-time monitoring live"}, {"id": "11.1", "g": 11, "t": "Map induction furnace critical parameters and monitoring requirements", "o": "Engr Touseef Ghalib       Engr Ahtahsham Khurshid             ", "s": 46235, "f": 46271, "p": 100, "deliverable": "Parameter mapping and monitoring strategy document", "milestone": "Requirements defined"}, {"id": "11.2", "g": 11, "t": "Select and procure in-house monitoring equipment and sensors", "o": "Engr Touseef Ghalib       Engr Ahtahsham Khurshid             ", "s": 46272, "f": 46309, "p": 100, "deliverable": "Equipment spec and purchase orders", "milestone": "Equipment procured"}, {"id": "11.3", "g": 11, "t": "Install sensors and configure in-house monitoring system", "o": "Engr Touseef Ghalib       Engr Ahtahsham Khurshid             ", "s": 46249, "f": 46377, "p": 0, "deliverable": "Installation and configuration report", "milestone": "Sensors installed and tested"}, {"id": "11.4", "g": 11, "t": "Establish monitoring procedures and train team on in-house system", "o": "Engr Touseef Ghalib       Engr Ahtahsham Khurshid             ", "s": 46388, "f": 46446, "p": 0, "deliverable": "SOP documentation and training records", "milestone": "In-house monitoring operational"}]},G=Object.fromEntries(DATA.goals.map(g=>[g.id,g.title]));
-T=DATA.tasks;
+let T=DATA.tasks;
 const ST={done:["Completed","var(--done)"],active:["In progress","var(--active)"],overdue:["Overdue","var(--over)"],later:["Not started","var(--later)"]};
-let sel={s:"",o:"",g:""};
-owners=[]; delayNotes={};
+const KEY="maintenance-goals-progress-fy2026-27";let pct={},sel={s:"",o:"",g:""};
+try{pct=JSON.parse(localStorage.getItem(KEY)||"{}")||{}}catch(e){}
+const TASKS_KEY="maintenance-goals-tasks-fy2026-27";
+const OWNERS_KEY="maintenance-goals-owners-fy2026-27";
+const NOTES_KEY="maintenance-goals-delay-notes-fy2026-27";
+let owners=[],delayNotes={};
+try{const savedTasks=JSON.parse(localStorage.getItem(TASKS_KEY)||"null");if(Array.isArray(savedTasks))T=savedTasks}catch(e){}
+try{owners=JSON.parse(localStorage.getItem(OWNERS_KEY)||"[]");if(!Array.isArray(owners))owners=[]}catch(e){owners=[]}
+try{delayNotes=JSON.parse(localStorage.getItem(NOTES_KEY)||"{}")||{}}catch(e){delayNotes={}}
 owners=[...new Set([...T.map(t=>String(t.o||"Unassigned").trim()),...owners].filter(Boolean))].sort((a,b)=>a.localeCompare(b));
-const saveTasks=()=>persistCloud();
-const saveOwners=()=>persistCloud();
-const saveNotes=()=>persistCloud();
+const saveTasks=()=>{try{localStorage.setItem(TASKS_KEY,JSON.stringify(T))}catch(e){}};
+const saveOwners=()=>{try{localStorage.setItem(OWNERS_KEY,JSON.stringify(owners))}catch(e){}};
+const saveNotes=()=>{try{localStorage.setItem(NOTES_KEY,JSON.stringify(delayNotes))}catch(e){}};
 const excelDay=iso=>Math.floor(Date.parse(iso+"T00:00:00Z")/86400000+25569);
 const isoDay=serial=>new Date((serial-25569)*86400000).toISOString().slice(0,10);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -160,81 +104,41 @@ const fmt=s=>new Date((s-25569)*864e5).toLocaleDateString("en-GB",{day:"numeric"
 const plan=(t,d)=>d<t.s?0:d>=t.f?100:Math.round((d-t.s)/(t.f-t.s)*100);
 const stat=(t,d)=>P(t)>=100?"done":d>t.f?"overdue":(P(t)>0||d>=t.s)?"active":"later";
 const wt=t=>Math.max(1,t.f-t.s+1),wavg=(list,fn)=>{let w=list.reduce((a,t)=>a+wt(t),0);return w?list.reduce((a,t)=>a+fn(t)*wt(t),0)/w:0};
-const save=()=>persistCloud();
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(pct))}catch(e){}};
+function ownerTokens(value){return String(value||"Unassigned").split(/\s{2,}|\s*\/\s*/).map(x=>x.trim()).filter(Boolean)}
 function refreshOwnerControls(){
+const selectedOwner=sel.o;
+const uniqueOwners=[...new Set([...owners,...T.flatMap(t=>ownerTokens(t.o))].filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+owners=uniqueOwners;
 $("fo").innerHTML='<option value="">All owners</option>'+owners.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("");
+if([...$("fo").options].some(o=>o.value===selectedOwner))$("fo").value=selectedOwner;else {sel.o="";$("fo").value="";}
+const removePrevious=$("removeOwner").value;
 $("removeOwner").innerHTML=owners.length?owners.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join(""):'<option value="">No owners</option>';
-$("newTaskOwner").innerHTML='<option value="Unassigned">Unassigned</option>'+owners.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("");
- if($("assignOwnerSelect")) $("assignOwnerSelect").innerHTML='<option value="">Choose owner</option>'+owners.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("");
+if([...$("removeOwner").options].some(o=>o.value===removePrevious))$("removeOwner").value=removePrevious;
+$("newTaskOwner").innerHTML='<option value="Unassigned">Unassigned</option>'+owners.filter(n=>n!=="Unassigned").map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("");
+const assignSelect=$("assignOwner"); if(assignSelect){const previous=assignSelect.value;assignSelect.innerHTML='<option value="Unassigned">Unassigned</option>'+owners.filter(n=>n!=="Unassigned").map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("");if([...assignSelect.options].some(o=>o.value===previous))assignSelect.value=previous;}
 }
 refreshOwnerControls();
 $("fg").innerHTML='<option value="">All goals</option>'+Object.keys(G).map(k=>`<option value="${k}">G${k} ${G[k]}</option>`).join("");
 $("newTaskGoal").innerHTML=Object.keys(G).map(k=>`<option value="${k}">G${k} — ${esc(G[k])}</option>`).join("");
- $("assignGoal").innerHTML=Object.keys(G).map(k=>`<option value="${k}">G${k} — ${esc(G[k])}</option>`).join("");
- function refreshAssignableTasks(){
-   const g=+$("assignGoal").value, list=T.filter(t=>t.g===g);
-   $("assignTask").innerHTML=list.length?list.map(t=>`<option value="${esc(t.id)}">${esc(t.id)} — ${esc(t.t)}</option>`).join(""):'<option value="">No tasks in this goal</option>';
- }
- $("assignGoal").addEventListener("change",refreshAssignableTasks);
- refreshAssignableTasks();
+$("assignGoal").innerHTML=Object.keys(G).map(k=>`<option value="${k}">G${k} — ${esc(G[k])}</option>`).join("");
+function refreshAssignmentTasks(){const goal=Number($("assignGoal").value),previous=$("assignTask").value;const tasks=T.filter(t=>Number(t.g)===goal);$("assignTask").innerHTML=tasks.map(t=>`<option value="${esc(t.id)}">${esc(t.id)} — ${esc(t.t)}</option>`).join("");if(tasks.some(t=>t.id===previous))$("assignTask").value=previous;syncAssignmentOwner();}
+function syncAssignmentOwner(){const task=T.find(t=>String(t.id)===$("assignTask").value);if(!task)return;const tokens=ownerTokens(task.o);const match=owners.find(n=>tokens.some(t=>t.toLowerCase()===n.toLowerCase()));$("assignOwner").value=match||"Unassigned";$("assignNewOwner").value="";}
+$("assignGoal").addEventListener("change",refreshAssignmentTasks);$("assignTask").addEventListener("change",syncAssignmentOwner);
+$("assignOwnerForm").addEventListener("submit",e=>{e.preventDefault();const task=T.find(t=>String(t.id)===$("assignTask").value&&Number(t.g)===Number($("assignGoal").value));if(!task){$("manageMessage").textContent="Select an existing task first.";return;}const fresh=$("assignNewOwner").value.trim();let owner=$("assignOwner").value||"Unassigned";if(fresh){owner=owners.find(n=>n.toLowerCase()===fresh.toLowerCase())||fresh;if(!owners.some(n=>n.toLowerCase()===owner.toLowerCase()))owners.push(owner);}task.o=owner;owners=[...new Set(owners)].sort((a,b)=>a.localeCompare(b));saveTasks();saveOwners();render();refreshAssignmentTasks();$("manageMessage").textContent=`Assigned ${owner} to existing task ${task.id}. Other task fields were not changed.`;});
 const minS=46204,maxF=46538,span=maxF-minS,gp=v=>Math.max(0,Math.min(100,(v-minS)/span*100));
 function months(){let out=[],c=new Date((minS-25569)*864e5),cur=new Date(Date.UTC(c.getUTCFullYear(),c.getUTCMonth(),1));while(cur.getTime()/864e5+25569<=maxF){out.push({s:cur.getTime()/864e5+25569,label:cur.toLocaleDateString("en-GB",{month:"short",year:"2-digit",timeZone:"UTC"})});cur=new Date(Date.UTC(cur.getUTCFullYear(),cur.getUTCMonth()+1,1))}return out}
 const MONTHS=months(),todayLine=d=>d>=minS&&d<=maxF?`<div class="gtoday" style="left:${gp(d)}%"></div>`:"";
 function ganttHTML(d){let h=`<div class="lbl hdr">Goal / Task</div><div class="trk hdr">`+MONTHS.map(m=>`<div class="mon" style="left:${gp(m.s)}%">${m.label}</div>`).join("")+todayLine(d)+`</div>`;Object.keys(G).forEach(k=>{h+=`<div class="lbl hdr">G${k} — ${G[k]}</div><div class="trk hdr"></div>`;T.filter(t=>t.g==k).forEach(t=>{let s=stat(t,d),left=gp(t.s),w=Math.max(gp(t.f)-left,.7);h+=`<div class="lbl" title="${t.t}">${t.id} ${t.t}</div><div class="trk"><div class="gbar" style="left:${left}%;width:${w}%;border:1px solid ${ST[s][1]}"><i style="width:${P(t)}%;background:${ST[s][1]}"></i></div>${todayLine(d)}</div>`})});return h}
-function render(){
- refreshOwnerControls();
- if($("assignGoal")){
-   const priorTask=$("assignTask").value, priorGoal=$("assignGoal").value;
-   $("assignGoal").innerHTML=Object.keys(G).map(k=>`<option value="${k}">G${k} — ${esc(G[k])}</option>`).join("");
-   if(priorGoal && G[priorGoal]) $("assignGoal").value=priorGoal;
-   const g=+$("assignGoal").value, list=T.filter(t=>t.g===g);
-   $("assignTask").innerHTML=list.length?list.map(t=>`<option value="${esc(t.id)}">${esc(t.id)} — ${esc(t.t)}</option>`).join(""):'<option value="">No tasks in this goal</option>';
-   if(list.some(t=>String(t.id)===priorTask)) $("assignTask").value=priorTask;
- }
- let d=asOf(),n=T.length,c={done:0,active:0,overdue:0,later:0};T.forEach(t=>c[stat(t,d)]++);$("bigline").innerHTML=`${c.done}<small> of ${n} tasks completed</small>`;$("stack").innerHTML=["done","active","overdue","later"].map(k=>`<i style="width:${c[k]/n*100}%;background:${ST[k][1]}" title="${ST[k][0]}: ${c[k]}"></i>`).join("");$("legend").innerHTML=`<span><b>${n-c.done}</b> remaining</span>`+["done","active","overdue","later"].map(k=>`<span><b style="color:${ST[k][1]}">${c[k]}</b> ${ST[k][0].toLowerCase()}</span>`).join(" ");let a=wavg(T,P),p=wavg(T,t=>plan(t,d));$("actual").textContent=Math.round(a)+"%";$("planned").textContent=Math.round(p)+"%";$("abar").style.width=a+"%";$("pbar").style.left=p+"%";let gap=Math.round(a-p);$("gap").textContent=gap<0?`${-gap} points behind plan on ${fmt(d)}.`:gap>0?`${gap} points ahead of plan on ${fmt(d)}.`:`On plan for ${fmt(d)}.`;$("goals").innerHTML=Object.keys(G).map(k=>{let L=T.filter(t=>t.g==k),ga=wavg(L,P),gpp=wavg(L,t=>plan(t,d)),dn=L.filter(t=>P(t)>=100).length;return `<button class="goal${sel.g==k?" sel":""}" data-g="${k}"><span class="t">G${k} ${G[k]}</span><span class="c">${dn}/${L.length} done</span><span class="bar"><i style="width:${ga}%"></i><u style="left:${gpp}%"></u></span><span class="p">${Math.round(ga)}%</span></button>`}).join("");$("gantt").innerHTML=ganttHTML(d);
+function render(){refreshOwnerControls();let d=asOf(),n=T.length,c={done:0,active:0,overdue:0,later:0};T.forEach(t=>c[stat(t,d)]++);$("bigline").innerHTML=`${c.done}<small> of ${n} tasks completed</small>`;$("stack").innerHTML=["done","active","overdue","later"].map(k=>`<i style="width:${c[k]/n*100}%;background:${ST[k][1]}" title="${ST[k][0]}: ${c[k]}"></i>`).join("");$("legend").innerHTML=`<span><b>${n-c.done}</b> remaining</span>`+["done","active","overdue","later"].map(k=>`<span><b style="color:${ST[k][1]}">${c[k]}</b> ${ST[k][0].toLowerCase()}</span>`).join(" ");let a=wavg(T,P),p=wavg(T,t=>plan(t,d));$("actual").textContent=Math.round(a)+"%";$("planned").textContent=Math.round(p)+"%";$("abar").style.width=a+"%";$("pbar").style.left=p+"%";let gap=Math.round(a-p);$("gap").textContent=gap<0?`${-gap} points behind plan on ${fmt(d)}.`:gap>0?`${gap} points ahead of plan on ${fmt(d)}.`:`On plan for ${fmt(d)}.`;$("goals").innerHTML=Object.keys(G).map(k=>{let L=T.filter(t=>t.g==k),ga=wavg(L,P),gpp=wavg(L,t=>plan(t,d)),dn=L.filter(t=>P(t)>=100).length;return `<button class="goal${sel.g==k?" sel":""}" data-g="${k}"><span class="t">G${k} ${G[k]}</span><span class="c">${dn}/${L.length} done</span><span class="bar"><i style="width:${ga}%"></i><u style="left:${gpp}%"></u></span><span class="p">${Math.round(ga)}%</span></button>`}).join("");$("gantt").innerHTML=ganttHTML(d);
 let fc=T.filter(t=>{let s=stat(t,d);return s==="overdue"||(s!=="done"&&t.f-d<=7&&t.f>=d)||(s!=="done"&&t.s>d&&t.s-d<=7)}).sort((x,y)=>x.f-y.f);$("focus").innerHTML=fc.length?fc.map(t=>{let s=stat(t,d),lbl=s==="overdue"?`Overdue since ${fmt(t.f)}`:t.s>d?`Starts ${fmt(t.s)}`:`Due ${fmt(t.f)}`;return `<li><span class="tag ${s}">${lbl}</span><span><b>${t.id}</b> ${t.t}<br><span class="mini">${t.o} · ${P(t)}% complete</span></span></li>`}).join(""):'<li class="empty">Nothing overdue or due this week.</li>';
-let rows=T.filter(t=>{let s=stat(t,d);return(!sel.s||(sel.s==="remaining"?s!=="done":s===sel.s))&&(!sel.o||t.o.toLowerCase().includes(sel.o.toLowerCase()))&&(!sel.g||t.g==sel.g)});$("count").textContent=`Showing ${rows.length} of ${n}`;$("rows").innerHTML=rows.map(t=>{let s=stat(t,d),late=(P(t)<100&&d>=t.f),nt=delayNotes[t.id]||{};return `<tr><td class="id">${esc(t.id)}</td><td><b>G${t.g} — ${esc(G[t.g])}</b><br>${esc(t.t)}</td><td>${esc(t.o||"Unassigned")}</td><td class="mini">${fmt(t.s)} – ${fmt(t.f)}</td><td>${plan(t,d)}%</td><td class="pc"><input type="number" min="0" max="100" step="5" value="${P(t)}" data-id="${esc(t.id)}" aria-label="Percent complete ${esc(t.id)}"> <button data-done="${esc(t.id)}" title="Mark 100%">✓</button></td><td><span class="tag ${s}">${ST[s][0]}</span></td><td>${esc(t.deliverable||"—")}<br><span class="mini">${esc(t.milestone||"")}</span></td><td class="notes-cell">${late?'<span class="mini">Due / overdue — record the reason and recovery action</span>':'<span class="mini">Optional delay / recovery notes</span>'}<textarea data-note-id="${esc(t.id)}" data-note="reason" placeholder="Why is this task late?">${esc(nt.reason||"")}</textarea><textarea data-note-id="${esc(t.id)}" data-note="action" placeholder="Recovery action / measures to catch up">${esc(nt.action||"")}</textarea></td><td><button class="task-delete" data-delete-task="${esc(t.id)}" title="Delete this task">Delete task</button></td></tr>`}).join("")||'<tr><td colspan="10">No tasks match these filters.</td></tr>'}
+let rows=T.filter(t=>{let s=stat(t,d);return(!sel.s||(sel.s==="remaining"?s!=="done":s===sel.s))&&(!sel.o||ownerTokens(t.o).some(n=>n.toLowerCase()===sel.o.toLowerCase()))&&(!sel.g||t.g==sel.g)});$("count").textContent=`Showing ${rows.length} of ${n}`;$("rows").innerHTML=rows.map(t=>{let s=stat(t,d),late=(P(t)<100&&d>=t.f),nt=delayNotes[t.id]||{};return `<tr><td class="id">${esc(t.id)}</td><td><b>G${t.g} — ${esc(G[t.g])}</b><br>${esc(t.t)}</td><td>${esc(t.o||"Unassigned")}</td><td class="mini">${fmt(t.s)} – ${fmt(t.f)}</td><td>${plan(t,d)}%</td><td class="pc"><input type="number" min="0" max="100" step="5" value="${P(t)}" data-id="${esc(t.id)}" aria-label="Percent complete ${esc(t.id)}"> <button data-done="${esc(t.id)}" title="Mark 100%">✓</button></td><td><span class="tag ${s}">${ST[s][0]}</span></td><td>${esc(t.deliverable||"—")}<br><span class="mini">${esc(t.milestone||"")}</span></td><td class="notes-cell">${late?'<span class="mini">Due / overdue — record the reason and recovery action</span>':'<span class="mini">Optional delay / recovery notes</span>'}<textarea data-note-id="${esc(t.id)}" data-note="reason" placeholder="Why is this task late?">${esc(nt.reason||"")}</textarea><textarea data-note-id="${esc(t.id)}" data-note="action" placeholder="Recovery action / measures to catch up">${esc(nt.action||"")}</textarea></td><td><button class="task-delete" data-delete-task="${esc(t.id)}" title="Delete this task">Delete task</button></td></tr>`}).join("")||'<tr><td colspan="10">No tasks match these filters.</td></tr>'}
 $("rows").addEventListener("change",e=>{let i=e.target.dataset.id;if(i){pct[i]=Math.min(100,Math.max(0,+e.target.value||0));save();render()}});$("rows").addEventListener("click",e=>{let i=e.target.dataset.done;if(i){pct[i]=100;save();render()}});$("goals").addEventListener("click",e=>{let b=e.target.closest("[data-g]");if(b){sel.g=sel.g==b.dataset.g?"":b.dataset.g;$("fg").value=sel.g;render()}});$("fs").onchange=e=>{sel.s=e.target.value;render()};$("fo").onchange=e=>{sel.o=e.target.value;render()};$("fg").onchange=e=>{sel.g=e.target.value;render()}; 
 $("rows").addEventListener("input",e=>{const id=e.target.dataset.noteId,field=e.target.dataset.note;if(id&&field){delayNotes[id]=delayNotes[id]||{};delayNotes[id][field]=e.target.value;saveNotes()}});
 $("rows").addEventListener("click",e=>{const id=e.target.dataset.deleteTask;if(id&&confirm(`Delete task ${id}? This cannot be undone in this browser.`)){T=T.filter(t=>t.id!==id);delete pct[id];delete delayNotes[id];saveTasks();save();saveNotes();render()}});
-$("assignOwnerForm").addEventListener("submit",e=>{
- e.preventDefault();
- const taskId=$("assignTask").value;
- let owner=$("assignNewOwner").value.trim()||$("assignOwnerSelect").value;
- if(!taskId){$("manageMessage").textContent="Select an existing task first.";return}
- if(!owner){$("manageMessage").textContent="Choose an owner or enter a new owner name.";return}
- const task=T.find(t=>String(t.id)===taskId);
- if(!task){$("manageMessage").textContent="The selected task could not be found.";return}
- const existing=owners.find(o=>o.toLowerCase()===owner.toLowerCase());
- if(existing) owner=existing;
- else {owners.push(owner);owners.sort((a,b)=>a.localeCompare(b));saveOwners();}
- task.o=owner; saveTasks(); refreshOwnerControls();
- $("assignOwnerSelect").value=owner; $("assignNewOwner").value="";
- render();
- $("manageMessage").textContent=`Assigned ${owner} to existing task ${task.id} in Goal ${task.g}.`;
-});
 $("ownerForm").addEventListener("submit",e=>{e.preventDefault();const name=$("newOwner").value.trim();if(!name)return;if(owners.some(o=>o.toLowerCase()===name.toLowerCase())){$("manageMessage").textContent="That owner already exists.";return}owners.push(name);owners.sort((a,b)=>a.localeCompare(b));saveOwners();refreshOwnerControls();$("newOwner").value="";$("manageMessage").textContent=`Owner added: ${name}`});
 $("deleteOwner").addEventListener("click",()=>{const name=$("removeOwner").value;if(!name)return;if(!confirm(`Delete owner "${name}"? Any task assigned to this exact owner entry will become Unassigned.`))return;owners=owners.filter(o=>o!==name);T=T.map(t=>String(t.o||"").trim()===name?{...t,o:"Unassigned"}:t);if(!owners.includes("Unassigned")&&T.some(t=>t.o==="Unassigned"))owners.push("Unassigned");saveOwners();saveTasks();refreshOwnerControls();render();$("manageMessage").textContent=`Owner deleted: ${name}`});
 $("taskForm").addEventListener("submit",e=>{e.preventDefault();const g=+$("newTaskGoal").value,title=$("newTaskTitle").value.trim(),owner=$("newTaskOwner").value||"Unassigned",start=$("newTaskStart").value,finish=$("newTaskFinish").value;if(!title||!start||!finish)return;if(finish<start){$("manageMessage").textContent="Due date must be on or after the start date.";return}const s=excelDay(start),f=excelDay(finish);if(s<minS||f>maxF){$("manageMessage").textContent="Please schedule the task within FY 2026–27 (1 Jul 2026 to 30 Jun 2027) so it fits the existing Gantt chart.";return}const nums=T.filter(t=>t.g===g).map(t=>+(String(t.id).split(".")[1]||0));const next=Math.max(0,...nums)+1;const id=`${g}.${next}`;T.push({id,g,t:title,o:owner,s,f,p:0,deliverable:$("newTaskDeliverable").value.trim(),milestone:$("newTaskMilestone").value.trim()});if(owner!=="Unassigned"&&!owners.includes(owner)){owners.push(owner);saveOwners()}saveTasks();$("taskForm").reset();$("newTaskStart").value="2026-07-01";$("newTaskFinish").value="2026-07-31";$("manageMessage").textContent=`Added task ${id} to Goal ${g}.`;render()});
-$("asof").onchange=render;$("reset").onclick=()=>{if(confirm("Reset all task progress to the original values from the maintenance goals workbook?")){pct={};save();render()}};
-$("logoutButton").onclick=async()=>{cloudReady=false;await signOut(auth);dashboardApp.style.display="none";loginPanel.style.display="block";loginForm.reset();loginError.textContent="";};
-try {
-  const snap=await get(ref(db,DASHBOARD_PATH));
-  if(snap.exists()){
-    const cloud=snap.val()||{};
-    if(cloud.pct && typeof cloud.pct==="object") pct=restoreTaskKeys(cloud.pct);
-    if(Array.isArray(cloud.tasks)) T=cloud.tasks;
-    if(Array.isArray(cloud.owners)) owners=cloud.owners;
-    if(cloud.delayNotes && typeof cloud.delayNotes==="object") delayNotes=restoreTaskKeys(cloud.delayNotes);
-  }
-  owners=[...new Set([...T.map(t=>String(t.o||"Unassigned").trim()),...owners].filter(Boolean))].sort((a,b)=>a.localeCompare(b));
-  cloudReady=true;
-  render();
-  $("cloudStatus").textContent="Connected to Firebase · Changes save automatically";
-} catch(err) {
-  $("cloudStatus").textContent="Could not load Firebase data: "+err.message;
-  console.error(err);
-  render();
-}
-}
+refreshAssignmentTasks();
+$("asof").onchange=render;$("reset").onclick=()=>{if(confirm("Reset all task progress to the original values from the maintenance goals workbook?")){pct={};save();render()}};render();
 </script></body></html>
