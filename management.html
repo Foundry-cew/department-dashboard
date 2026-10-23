@@ -75,7 +75,7 @@ function renderAggregate(){
   for(const d of depts){
     const el=cardsByKey.get(d.key),entry=summaries.get(d.key);
     if(!entry)continue;
-    if(entry.error){errors++;el.querySelector('.state').textContent='Could not read department data';el.querySelector('.nums').innerHTML='<span>Check Firebase read rules</span>';continue}
+    if(entry.error){errors++;el.querySelector('.state').textContent='Firebase read error: '+(entry.errorCode||'unknown');el.querySelector('.goal-stat strong').textContent='—';el.querySelector('.progress i').style.width='0%';el.querySelector('.nums').innerHTML='<span>'+(entry.errorMessage||'Unable to read department data').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))+'</span>';continue}
     const s=entry.summary;
     if(!s||!s.hasData){el.querySelector('.state').textContent=entry.exists?'No goal/task records found':'Awaiting saved department data';el.querySelector('.state').classList.add('waiting');el.querySelector('.nums').innerHTML=`<span>${entry.exists?'Department data is empty':'No saved data yet'}</span>`;el.querySelector('.goal-stat strong').textContent='—';el.querySelector('.progress i').style.width='0%';continue}
     reporting++;allGoals+=s.total;allDone+=s.done;weightedProgress+=s.avg*s.total;
@@ -87,7 +87,7 @@ function renderAggregate(){
   $('goalsTotal').textContent=allGoals||'—';$('goalsDone').textContent=reporting?allDone:'—';
   $('goalsAvg').textContent=allGoals?Math.round(weightedProgress/allGoals)+'%':'—';
   $('deptReporting').textContent=reporting+' / 4';
-  $('dbStatus').textContent=errors?`${errors} department(s) could not be read. Check Firebase Rules for the authorized Management account.`:`Live Firebase updates active · ${reporting} of 4 departments reporting.`;
+  const firstError=[...summaries.values()].find(x=>x?.error);$('dbStatus').textContent=errors?`${errors} department(s) could not be read. Firebase error: ${firstError?.errorCode||'unknown'} — ${firstError?.errorMessage||'Check access and connection.'}`:`Live Firebase updates active · ${reporting} of 4 departments reporting.`;
 }
 function loadData(){
   if(auth.currentUser?.uid!==MANAGEMENT_UID)return;
@@ -99,7 +99,8 @@ function loadData(){
       summaries.set(d.key,{exists:snap.exists(),summary:snap.exists()?summarize(snap.val()):null});
       renderAggregate();
     },err=>{
-      summaries.set(d.key,{error:true});renderAggregate();
+      summaries.set(d.key,{error:true, errorCode:err?.code||'unknown', errorMessage:err?.message||String(err)});
+      renderAggregate();
     });
   }
   $('dbStatus').textContent='Connecting to live Firebase department data…';
@@ -109,7 +110,7 @@ $('refresh').addEventListener('click',()=>{
   $('dbStatus').textContent='Refreshing Firebase data…';
   Promise.all(depts.map(async d=>{
     try{const snap=await get(ref(db,'departments/'+d.key+'/dashboard'));summaries.set(d.key,{exists:snap.exists(),summary:snap.exists()?summarize(snap.val()):null});}
-    catch(e){summaries.set(d.key,{error:true});}
+    catch(e){summaries.set(d.key,{error:true,errorCode:e?.code||'unknown',errorMessage:e?.message||String(e)});}
   })).then(renderAggregate);
 });
 $('logout').addEventListener('click',async()=>{await signOut(auth);$('dashboard').style.display='none';$('loginPanel').style.display='block';$('password').value='';$('loginStatus').textContent='You have signed out.'});setPersistence(auth,browserLocalPersistence).then(()=>{onAuthStateChanged(auth,user=>{if(user&&user.uid!==MANAGEMENT_UID){signOut(auth).catch(()=>{});return;}if(user&&user.uid===MANAGEMENT_UID){$('loginPanel').style.display='none';$('dashboard').style.display='block';loadData();}else{$('dashboard').style.display='none';$('loginPanel').style.display='block';}});}).catch(err=>{$('loginStatus').textContent='Could not restore sign-in session. Please sign in again.';});
