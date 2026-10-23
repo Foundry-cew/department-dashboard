@@ -50,6 +50,7 @@ td.notes-cell .mini{font-weight:600}
       <div class="form-grid">
         <label class="f">Goal<select id="assignGoal" required></select></label>
         <label class="f">Existing task<select id="assignTask" required></select></label>
+        <label class="f">Assignment action<select id="assignMode"><option value="add">Add owner (keep current owners)</option><option value="replace">Replace current owners</option></select></label>
         <label class="f">Select owner<select id="assignOwner"></select></label>
         <label class="f">Or enter new owner<input id="assignNewOwner" maxlength="120" placeholder="Optional new owner"></label>
       </div>
@@ -165,7 +166,31 @@ $("assignGoal").innerHTML=Object.keys(G).map(k=>`<option value="${k}">G${k} — 
 function refreshAssignmentTasks(){const goal=Number($("assignGoal").value),previous=$("assignTask").value;const tasks=T.filter(t=>Number(t.g)===goal);$("assignTask").innerHTML=tasks.map(t=>`<option value="${esc(t.id)}">${esc(t.id)} — ${esc(t.t)}</option>`).join("");if(tasks.some(t=>t.id===previous))$("assignTask").value=previous;syncAssignmentOwner();}
 function syncAssignmentOwner(){const task=T.find(t=>String(t.id)===$("assignTask").value);if(!task)return;const tokens=ownerTokens(task.o);const match=owners.find(n=>tokens.some(t=>t.toLowerCase()===n.toLowerCase()));$("assignOwner").value=match||"Unassigned";$("assignNewOwner").value="";}
 $("assignGoal").addEventListener("change",refreshAssignmentTasks);$("assignTask").addEventListener("change",syncAssignmentOwner);
-$("assignOwnerForm").addEventListener("submit",e=>{e.preventDefault();const task=T.find(t=>String(t.id)===$("assignTask").value&&Number(t.g)===Number($("assignGoal").value));if(!task){$("manageMessage").textContent="Select an existing task first.";return;}const fresh=$("assignNewOwner").value.trim();let owner=$("assignOwner").value||"Unassigned";if(fresh){owner=owners.find(n=>n.toLowerCase()===fresh.toLowerCase())||fresh;if(!owners.some(n=>n.toLowerCase()===owner.toLowerCase()))owners.push(owner);}task.o=owner;owners=[...new Set(owners)].sort((a,b)=>a.localeCompare(b));saveTasks();saveOwners();render();refreshAssignmentTasks();$("manageMessage").textContent=`Assigned ${owner} to existing task ${task.id}. Other task fields were not changed.`;});
+$("assignOwnerForm").addEventListener("submit",e=>{
+ e.preventDefault();
+ const task=T.find(t=>String(t.id)===$("assignTask").value&&Number(t.g)===Number($("assignGoal").value));
+ if(!task){$("manageMessage").textContent="Select an existing task first.";return;}
+ const typed=$("assignNewOwner").value.trim();
+ let owner=typed||$("assignOwner").value;
+ if(!owner){$("manageMessage").textContent="Select an owner or enter a new owner name.";return;}
+ owner=owners.find(n=>n.toLowerCase()===owner.toLowerCase())||owner;
+ if(!owners.some(n=>n.toLowerCase()===owner.toLowerCase()))owners.push(owner);
+ const mode=$("assignMode").value;
+ if(mode==="add"){
+   const current=ownerTokens(task.o).filter(n=>!/^unassigned$/i.test(n));
+   if(current.some(n=>canonicalOwner(n).toLowerCase()===canonicalOwner(owner).toLowerCase())){
+     $("manageMessage").textContent=`${owner} is already assigned to task ${task.id}. No duplicate was added.`;return;
+   }
+   task.o=[...current,owner].join(" / ")||owner;
+ }else{
+   task.o=owner;
+ }
+ owners=[...new Set(owners.map(canonicalOwner))].sort((a,b)=>a.localeCompare(b));
+ saveTasks();saveOwners();refreshOwnerControls();render();refreshAssignmentTasks();
+ $("assignNewOwner").value="";
+ $("manageMessage").textContent=mode==="add"?`Added ${owner} to task ${task.id}; existing owners and all task details were preserved.`:`Replaced the owner assignment for task ${task.id} with ${owner}. Progress, dates, deliverable, and milestone were unchanged.`;
+ if(typeof window.queueMaintenanceSave==="function")window.queueMaintenanceSave();
+});
 const minS=46204,maxF=46538,span=maxF-minS,gp=v=>Math.max(0,Math.min(100,(v-minS)/span*100));
 function months(){let out=[],c=new Date((minS-25569)*864e5),cur=new Date(Date.UTC(c.getUTCFullYear(),c.getUTCMonth(),1));while(cur.getTime()/864e5+25569<=maxF){out.push({s:cur.getTime()/864e5+25569,label:cur.toLocaleDateString("en-GB",{month:"short",year:"2-digit",timeZone:"UTC"})});cur=new Date(Date.UTC(cur.getUTCFullYear(),cur.getUTCMonth()+1,1))}return out}
 const MONTHS=months(),todayLine=d=>d>=minS&&d<=maxF?`<div class="gtoday" style="left:${gp(d)}%"></div>`:"";
