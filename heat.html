@@ -157,7 +157,7 @@ T = DATA.tasks.map(t => ({ ...t }));
 
   let sel={s:"",o:"",g:""};
 owners=[]; delayNotes={};
-owners=[...new Set([...T.map(t=>String(t.o||"Unassigned").trim()),...owners].filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+owners=[...new Set([...T.flatMap(t=>ownerTokens(t.o)),...owners.flatMap(ownerTokens)].filter(Boolean).map(canonicalOwner))].sort((a,b)=>a.localeCompare(b));
 const saveTasks=()=>persistCloud();
 const saveOwners=()=>persistCloud();
 const saveNotes=()=>persistCloud();
@@ -173,7 +173,40 @@ const plan=(t,d)=>d<t.s?0:d>=t.f?100:Math.round((d-t.s)/(t.f-t.s)*100);
 const stat=(t,d)=>P(t)>=100?"done":d>t.f?"overdue":(P(t)>0||d>=t.s)?"active":"later";
 const wt=t=>Math.max(1,t.f-t.s+1),wavg=(list,fn)=>{let w=list.reduce((a,t)=>a+wt(t),0);return w?list.reduce((a,t)=>a+fn(t)*wt(t),0)/w:0};
 const save=()=>persistCloud();
-function ownerTokens(value){return String(value||"Unassigned").split(/\s{2,}|\s*\/\s*/).map(x=>x.trim()).filter(Boolean)}
+const OWNER_ROSTER = [
+  "Engr Ahtahsham Khurshid", "Engr Ahtasham Khurshid", "Engr Amir Abbas",
+  "Engr Touseef Ghalib", "Mr. Farhan Ahmad", "Mr Farhan Ahmad", "Mr.Farhan Ahmad",
+  "Mr Usman", "Adnan Yousaf", "Asst. Mgr HT", "Electrical & Mechanical",
+  "Foundry Team", "Management", "OEM Engineer", "Unassigned"
+];
+function canonicalOwner(name){
+  const key=String(name||"").toLowerCase().replace(/[^a-z0-9]+/g,"");
+  if(key.includes("ahtahshamkhurshid")||key.includes("ahtashamkhurshid")) return "Engr Ahtahsham Khurshid";
+  if(key.includes("farhanahmad")) return "Mr Farhan Ahmad";
+  if(key.includes("amirabbas")) return "Engr Amir Abbas";
+  if(key.includes("touseefghalib")) return "Engr Touseef Ghalib";
+  const exact=OWNER_ROSTER.find(n=>n.toLowerCase().replace(/[^a-z0-9]+/g,"")===key);
+  return exact||String(name||"").trim();
+}
+function ownerTokens(value){
+  const raw=String(value||"Unassigned").trim();
+  if(!raw) return ["Unassigned"];
+  const parts=raw.split(/\s{2,}|\s*\/\s*/).map(x=>x.trim()).filter(Boolean);
+  const roster=[...new Set([...OWNER_ROSTER,...owners.filter(n=>!/[\/]|\s{2,}/.test(n))])].sort((a,b)=>b.length-a.length);
+  const found=[];
+  for(const part of parts){
+    const compact=part.toLowerCase().replace(/\s+/g," ").trim();
+    if(roster.some(n=>n.toLowerCase()===compact)){found.push(canonicalOwner(part));continue;}
+    let remaining=part;
+    const candidates=roster.filter(n=>n.length>2).sort((a,b)=>b.length-a.length);
+    for(const candidate of candidates){
+      const re=new RegExp("(^|\\s)"+candidate.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"(?=\\s|$)","i");
+      if(re.test(remaining)){found.push(canonicalOwner(candidate));remaining=remaining.replace(re," ");}
+    }
+    if(!found.length && remaining.trim()) found.push(canonicalOwner(remaining));
+  }
+  return [...new Set(found.map(canonicalOwner).filter(Boolean))];
+}
 function refreshOwnerControls(){
 const selectedOwner=sel.o;
 owners=[...new Set([...owners,...T.flatMap(t=>ownerTokens(t.o))].filter(Boolean))].sort((a,b)=>a.localeCompare(b));
@@ -217,7 +250,7 @@ try {
     if(Array.isArray(cloud.owners)) owners=cloud.owners;
     if(cloud.delayNotes && typeof cloud.delayNotes==="object") delayNotes=restoreTaskKeys(cloud.delayNotes);
   }
-  owners=[...new Set([...T.map(t=>String(t.o||"Unassigned").trim()),...owners].filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  owners=[...new Set([...T.flatMap(t=>ownerTokens(t.o)),...owners.flatMap(ownerTokens)].filter(Boolean).map(canonicalOwner))].sort((a,b)=>a.localeCompare(b));
   cloudReady=true;
   render();
   $("cloudStatus").textContent="Connected to Firebase · Changes save automatically";
