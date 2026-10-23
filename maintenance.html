@@ -89,7 +89,6 @@ let owners=[],delayNotes={};
 try{const savedTasks=JSON.parse(localStorage.getItem(TASKS_KEY)||"null");if(Array.isArray(savedTasks))T=savedTasks}catch(e){}
 try{owners=JSON.parse(localStorage.getItem(OWNERS_KEY)||"[]");if(!Array.isArray(owners))owners=[]}catch(e){owners=[]}
 try{delayNotes=JSON.parse(localStorage.getItem(NOTES_KEY)||"{}")||{}}catch(e){delayNotes={}}
-owners=[...new Set([...T.flatMap(t=>ownerTokens(t.o)),...owners.flatMap(ownerTokens)].filter(Boolean).map(canonicalOwner))].sort((a,b)=>a.localeCompare(b));
 const saveTasks=()=>{try{localStorage.setItem(TASKS_KEY,JSON.stringify(T))}catch(e){}};
 const saveOwners=()=>{try{localStorage.setItem(OWNERS_KEY,JSON.stringify(owners))}catch(e){}};
 const saveNotes=()=>{try{localStorage.setItem(NOTES_KEY,JSON.stringify(delayNotes))}catch(e){}};
@@ -139,6 +138,7 @@ function ownerTokens(value){
   }
   return [...new Set(found.map(canonicalOwner).filter(Boolean))];
 }
+owners=[...new Set([...T.flatMap(t=>ownerTokens(t.o)),...owners.flatMap(ownerTokens)].filter(Boolean).map(canonicalOwner))].sort((a,b)=>a.localeCompare(b));
 function refreshOwnerControls(){
 const selectedOwner=sel.o;
 const uniqueOwners=[...new Set([...owners.flatMap(ownerTokens),...T.flatMap(t=>ownerTokens(t.o))].filter(Boolean).map(canonicalOwner))].sort((a,b)=>a.localeCompare(b));
