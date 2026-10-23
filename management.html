@@ -12,16 +12,28 @@ import {initializeApp} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase
 const firebaseConfig={apiKey:"AIzaSyCWBwb-lmErQ2Yb3C8uFR6uHzCmaWcFJ0A",authDomain:"foundry-department-dashboard.firebaseapp.com",databaseURL:"https://foundry-department-dashboard-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"foundry-department-dashboard",storageBucket:"foundry-department-dashboard.firebasestorage.app",messagingSenderId:"875228967719",appId:"1:875228967719:web:b5e96a39a706ba0dbd2f02"};
 const MANAGEMENT_UID='jQoHH8MYHtf8AB9SWjYNn1RJvCN2';const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getDatabase(app),$=id=>document.getElementById(id);const depts=[{key:'foundry',name:'Foundry',cls:'foundry',icon:'▥',page:'department-review.html?dept=foundry'},{key:'maintenance',name:'Maintenance',cls:'maintenance',icon:'⚒',page:'department-review.html?dept=maintenance'},{key:'quality',name:'Quality',cls:'quality',icon:'✓',page:'department-review.html?dept=quality'},{key:'heat-treatment',name:'Heat Treatment',cls:'heat',icon:'♨',page:'department-review.html?dept=heat-treatment'}];
 function normalizeData(data){
-  const tasks=Array.isArray(data?.tasks)?data.tasks:Object.values(data?.tasks||{});
-  // Department dashboards save task completion values under "pct"; accept "progress" too.
-  const saved=data?.pct||data?.progress||{};
-  const progress={};
-  for(const [k,v] of Object.entries(saved)){
-    progress[String(k).replaceAll('_','.')]=Math.max(0,Math.min(100,Number(v)||0));
+  // Current department pages save task completion in both task.p and dashboard.pct.
+  // Firebase may return tasks as an array or as an object keyed by numeric indexes.
+  const tasks = Array.isArray(data?.tasks)
+    ? data.tasks
+    : (data?.tasks && typeof data.tasks === 'object' ? Object.values(data.tasks) : []);
+  const saved = (data?.pct && typeof data.pct === 'object') ? data.pct
+              : ((data?.progress && typeof data.progress === 'object') ? data.progress : {});
+  const progress = new Map();
+  for (const [rawKey, rawValue] of Object.entries(saved)) {
+    const key = String(rawKey).replaceAll('_', '.');
+    const value = Number(rawValue);
+    if (Number.isFinite(value)) progress.set(key, Math.max(0, Math.min(100, value)));
   }
-  return tasks.map((t,i)=>{
-    const id=String(t?.id??i+1);
-    return {...t,id,p:progress[id]??progress[id.replaceAll('.','_')]??Math.max(0,Math.min(100,Number(t?.progress??t?.p??t?.pct??0)||0))};
+  return tasks.filter(t => t && typeof t === 'object').map((t, i) => {
+    const id = String(t.id ?? t.taskId ?? t.key ?? (i + 1));
+    const alternateId = id.replaceAll('.', '_');
+    const fromMap = progress.has(id) ? progress.get(id)
+                   : (progress.has(alternateId) ? progress.get(alternateId) : undefined);
+    const fromTask = Number(t.p ?? t.progress ?? t.pct ?? 0);
+    const p = fromMap !== undefined ? fromMap
+            : (Number.isFinite(fromTask) ? Math.max(0, Math.min(100, fromTask)) : 0);
+    return { ...t, id, p };
   });
 }
 function goalGroups(data){const tasks=normalizeData(data);const groups=new Map();for(const t of tasks){let raw=t.g??t.goalId??t.goal??String(t.id).split('.')[0];if(raw&&typeof raw==='object')raw=raw.id??raw.number??raw.title??'';let key=String(raw||'Other');if(key.toLowerCase().startsWith('goal '))key=key.slice(5);const title=String(t.goalTitle??t.goalName??(typeof t.goal==='string'&&!/^\d+(\.\d+)?$/.test(t.goal)?t.goal:'')??'').trim();if(!groups.has(key))groups.set(key,{key,title,values:[],taskCount:0,doneTasks:0});const g=groups.get(key);if(!g.title&&title)g.title=title;g.values.push(t.p);g.taskCount++;if(t.p>=100)g.doneTasks++}return [...groups.values()].map(g=>({...g,progress:g.values.length?Math.round(g.values.reduce((a,b)=>a+b,0)/g.values.length):0})).sort((a,b)=>String(a.key).localeCompare(String(b.key),undefined,{numeric:true}))}
