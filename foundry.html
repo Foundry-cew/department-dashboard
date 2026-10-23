@@ -244,9 +244,16 @@ const wavg=(list,fn)=>{const w=list.reduce((a,t)=>a+wt(t),0);return w?list.reduc
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(pct))}catch(e){}};
 
 function refreshOwnerControls(){
+  // Rebuild dropdowns without losing the active filter selection.
+  const ownerFilterValue = sel.o || $("fo").value || "";
+  const removeOwnerValue = $("removeOwner").value || "";
+  const newTaskOwnerValue = $("newTaskOwner").value || "Unassigned";
   $("fo").innerHTML='<option value="">All owners</option>'+owners.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("");
+  $("fo").value = owners.some(n=>ownerKey(n)===ownerKey(ownerFilterValue)) ? owners.find(n=>ownerKey(n)===ownerKey(ownerFilterValue)) : "";
   $("removeOwner").innerHTML=owners.length?owners.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join(""):'<option value="">No owners</option>';
-  $("newTaskOwner").innerHTML='<option value="Unassigned">Unassigned</option>'+owners.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("");
+  if(owners.includes(removeOwnerValue)) $("removeOwner").value=removeOwnerValue;
+  $("newTaskOwner").innerHTML='<option value="Unassigned">Unassigned</option>'+owners.filter(n=>ownerKey(n)!==ownerKey("Unassigned")).map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("");
+  if([...$("newTaskOwner").options].some(o=>o.value===newTaskOwnerValue)) $("newTaskOwner").value=newTaskOwnerValue;
 }
 refreshOwnerControls();
 $("fg").innerHTML='<option value="">All goals</option>'+Object.keys(G).map(k=>`<option value="${k}">G${k} ${G[k]}</option>`).join("");
