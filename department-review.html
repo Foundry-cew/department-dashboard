@@ -1,116 +1,97 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b121a"><title>Management Review · Annual Goals FY 2026–27</title>
-<style>
-:root{--bg:#09121b;--surface:#122330;--surface2:#0d1b26;--line:#2c4658;--text:#f4f8fb;--muted:#adc1d0;--gold:#e0ad2d;--orange:#ff5908;--blue:#087bd0;--green:#078751;--red:#ef2722;--violet:#9a7bff}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 12% 0%,#2b201a 0,transparent 30%),radial-gradient(ellipse at 90% 0%,#102b42 0,transparent 35%),var(--bg);color:var(--text);font:15px/1.5 Arial,Helvetica,sans-serif}.shell{max-width:1500px;margin:auto;padding:26px 22px 44px}header{text-align:center;margin:6px 0 28px}.eyebrow{color:var(--gold);font-size:12px;font-weight:800;letter-spacing:.24em;text-transform:uppercase;margin-bottom:8px}h1{font-size:clamp(30px,4.4vw,54px);line-height:1.08;letter-spacing:-.035em;margin:0 0 10px}.sub{color:var(--muted)}.rule{display:flex;align-items:center;justify-content:center;gap:15px;color:#d7e2eb;letter-spacing:.19em;font-weight:800;font-size:clamp(10px,1.5vw,15px);margin-top:14px}.rule:before,.rule:after{content:"";height:1px;width:clamp(25px,8vw,90px);background:#7f92a2}.panel{max-width:440px;margin:42px auto;background:linear-gradient(145deg,#162a38,#10202b);border:1px solid var(--line);border-radius:18px;padding:27px;box-shadow:0 18px 48px #0003}.panel h2{margin:0 0 8px;font-size:25px}label{display:block;margin:15px 0 6px;color:#c9d7e1;font-size:13px}input{width:100%;padding:13px;border:1px solid var(--line);border-radius:9px;background:#0b1720;color:var(--text);font:inherit}button,.btn{cursor:pointer;border:0;border-radius:10px;padding:12px 16px;background:var(--gold);color:#1d190c;font-weight:800;font-size:14px;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:transform .16s ease,filter .16s ease}button:hover,.btn:hover{filter:brightness(1.08);transform:translateY(-1px)}button:disabled{opacity:.65;cursor:wait;transform:none}.panel button{width:100%;margin-top:18px}.status{min-height:22px;color:#ffaaa3;font-size:13px;margin-top:10px}.small{color:var(--muted);font-size:13px}#dashboard{display:none}.topline{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:30px 0 18px}.topline h2{font-size:clamp(25px,3vw,34px);margin:0 0 4px}.actions{display:flex;gap:9px;flex-wrap:wrap}.btn.secondary{background:#263b4b;color:white;border:1px solid #395466}.overview{position:relative;overflow:hidden;background:linear-gradient(125deg,#172e3e,#11222e 65%,#1b2b36);border:1px solid #385366;border-radius:18px;padding:22px;margin-bottom:18px}.overview:after{content:"";position:absolute;width:220px;height:220px;right:-70px;top:-115px;border-radius:50%;border:1px solid #ffffff12;box-shadow:0 0 0 25px #ffffff05,0 0 0 50px #ffffff03;pointer-events:none}.section-kicker{font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:800;color:var(--gold)}.overview h2{font-size:22px;margin:4px 0 2px}.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:18px}.metric{min-width:0;background:#0b1923b8;border:1px solid #344b5b;border-radius:13px;padding:16px}.metric strong{display:block;font-size:clamp(25px,3vw,36px);line-height:1.1;letter-spacing:-.04em}.metric span{display:block;color:var(--muted);font-size:12px;margin-top:7px}.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px}.dept{--accent:var(--orange);position:relative;overflow:hidden;background:linear-gradient(145deg,#152a38,#10212c);border:1px solid #2d4759;border-top:5px solid var(--accent);border-radius:17px;padding:21px;box-shadow:0 12px 30px #0002}.dept.maintenance{--accent:var(--blue)}.dept.quality{--accent:var(--green)}.dept.heat{--accent:var(--red)}.dept-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.dept h3{font-size:25px;margin:0 0 5px}.dept-icon{display:grid;place-items:center;width:46px;height:46px;flex:none;border-radius:13px;background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--accent);font-size:24px}.goal-stat{display:flex;align-items:baseline;gap:8px;margin:22px 0 4px}.goal-stat strong{font-size:42px;line-height:1;letter-spacing:-.05em}.goal-stat span{color:var(--muted);font-size:13px}.progress{height:12px;background:#293e4b;border-radius:99px;overflow:hidden;margin:14px 0 9px}.progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),color-mix(in srgb,var(--accent) 65%,white));border-radius:99px;transition:width .5s ease}.nums{display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:13px}.dept .btn{margin-top:20px;background:var(--accent);color:white;width:100%;padding:14px}.dept .state{min-height:20px;color:var(--muted);font-size:13px}.dept .waiting{color:#ffd98a}.empty{padding:15px;border:1px dashed var(--line);border-radius:10px;color:var(--muted)}footer{text-align:center;color:#7f95a5;font-size:12px;margin-top:22px}@media(max-width:850px){.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:650px){.shell{padding:18px 12px 30px}.cards{grid-template-columns:1fr}.metrics{gap:8px}.metric{padding:13px}.overview{padding:16px}.dept{padding:17px}.topline{align-items:flex-start}}
-</style></head><body><main class="shell"><header><div class="eyebrow">Annual performance review</div><h1>Annual Goals FY 2026–27</h1><div class="sub">Management overview · Live department goal performance</div><div class="rule">DEPARTMENT PERFORMANCE &amp; REVIEW</div></header>
-<section class="panel" id="loginPanel"><h2>Management Login</h2><p class="sub">Sign in to review the latest goal progress from all four departments.</p><form id="loginForm"><label for="email">Management email</label><input id="email" type="email" autocomplete="username" required><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required><button id="loginBtn">Sign in <span aria-hidden="true">→</span></button><div class="status" id="loginStatus" role="status"></div></form><p class="small">Restricted to the authorized Management Firebase account.</p></section>
-<section id="dashboard"><div class="topline"><div><div class="section-kicker">Executive snapshot</div><h2>Department Goal Progress</h2><div class="sub">Latest saved performance · View-only access</div></div><div class="actions"><button id="refresh">↻ Refresh data</button><button id="logout" class="secondary">Sign out</button></div></div>
-<section class="overview"><div class="section-kicker">FY 2026–27 · Combined performance</div><h2>All-department goal achievement</h2><div class="sub">Calculated from goal-level progress, not the number of tasks.</div><div class="metrics"><div class="metric"><strong id="goalsTotal">—</strong><span>Total goals tracked</span></div><div class="metric"><strong id="goalsDone">—</strong><span>Goals achieved (100%)</span></div><div class="metric"><strong id="goalsAvg">—</strong><span>Average goal progress</span></div><div class="metric"><strong id="deptReporting">—</strong><span>Departments reporting</span></div></div></section>
-<div class="cards" id="cards"></div><p class="small" id="dbStatus" role="status" aria-live="polite"></p><footer>Annual Goals FY 2026–27 · Management review only</footer></section></main>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b121a"><title>Department Goal Review · Annual Goals FY 2026–27</title><style>
+:root{--bg:#09121b;--surface:#122330;--surface2:#0d1b26;--line:#2c4658;--text:#f4f8fb;--muted:#adc1d0;--accent:#ff5908}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 90% 0%,#102b42 0,transparent 35%),var(--bg);color:var(--text);font:15px/1.5 Arial,Helvetica,sans-serif}main{max-width:1450px;margin:auto;padding:26px 22px 44px}header{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap;margin-bottom:20px}.eyebrow{font-size:11px;color:var(--accent);font-weight:800;letter-spacing:.18em;text-transform:uppercase}h1{font-size:clamp(28px,3.8vw,44px);line-height:1.1;margin:4px 0 8px}h2{margin:0 0 10px}.muted{color:var(--muted)}.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 14px;border-radius:9px;background:#253a4b;color:white;text-decoration:none;border:1px solid var(--line);font-weight:700}.banner,.panel{background:linear-gradient(140deg,#152a38,#10212c);border:1px solid var(--line);border-radius:15px;padding:18px;margin-bottom:17px}.banner strong{color:var(--accent)}.summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:17px 0}.stat{padding:16px;border-radius:12px;background:#0b1923;border:1px solid var(--line)}.stat strong{display:block;font-size:clamp(25px,3vw,35px);letter-spacing:-.04em;line-height:1.1}.stat span{display:block;color:var(--muted);font-size:12px;margin-top:7px}.goal-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.goal{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:13px;padding:18px;min-width:0}.goal-head{display:flex;justify-content:space-between;gap:12px}.goal h3{margin:0 0 7px;font-size:19px}.goal-id{font-size:11px;color:var(--accent);font-weight:800;letter-spacing:.12em;text-transform:uppercase}.percent{font-size:27px;font-weight:800;white-space:nowrap}.bar{height:10px;background:#293e4b;border-radius:9px;overflow:hidden;margin:14px 0 8px}.bar i{display:block;height:100%;width:0;background:var(--accent);border-radius:9px}.goal-foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:12px}.status-pill{padding:4px 8px;border-radius:99px;background:#243b49;color:#dceaf2;font-size:11px;font-weight:700}.status-pill.done{background:#0d553f;color:#c7ffe9}.status-pill.active{background:#5c4616;color:#ffebad}.status-pill.later{background:#273946;color:#d6e0e7}.status-pill.overdue{background:#6b2525;color:#ffd7d7}.status-pill.risk{background:#674019;color:#ffe1b5}.status-pill.blocked{background:#5a285f;color:#f8d9ff}.status-pill.track{background:#0d553f;color:#c7ffe9}.riskline{margin-top:12px;padding:10px 12px;border-radius:9px;background:#0b1923;border:1px solid var(--line);font-size:13px}.riskline strong{color:#ffb36b}.riskline ul{margin:7px 0 0;padding-left:19px;color:var(--muted)}.empty{padding:18px;border:1px dashed var(--line);border-radius:12px;color:var(--muted)}@media(max-width:750px){main{padding:17px 12px}.summary{grid-template-columns:repeat(2,minmax(0,1fr))}.goal-grid{grid-template-columns:1fr}}@media(max-width:420px){.summary{gap:8px}.stat{padding:12px}}
+</style></head><body><main><header><div><div class="eyebrow">Management · View only</div><h1 id="title">Department Goal Review</h1><div class="muted">Annual Goals FY 2026–27 · Latest saved performance</div></div><a class="btn" href="management.html" onclick="if (history.length > 1) { event.preventDefault(); history.back(); }">← Back to Management</a></header><section class="banner"><strong>READ-ONLY REVIEW</strong><div class="muted">This page shows progress against each department goal. Editing and save controls are disabled.</div><div id="status" class="muted" style="margin-top:8px">Checking Management access…</div></section><section id="content" style="display:none"><div class="summary"><div class="stat"><strong id="goals">—</strong><span>Total goals</span></div><div class="stat"><strong id="done">—</strong><span>Goals achieved</span></div><div class="stat"><strong id="avg">—</strong><span>Average goal progress</span></div><div class="stat"><strong id="active">—</strong><span>Goals in progress</span></div></div><section class="panel"><h2>Goal-by-goal performance</h2><div class="muted" style="margin-bottom:14px">Each goal's progress is calculated from the saved progress of its linked tasks.</div><div id="riskSummary" class="riskline" style="margin-bottom:14px"></div><div class="goal-grid" id="goalGrid"></div></section></section></main>
 <script type="module">
-import {initializeApp} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js';import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut,setPersistence,browserLocalPersistence} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';import {getDatabase,ref,get,onValue} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js';
+import {initializeApp} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js';
+import {getAuth,onAuthStateChanged,signOut} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
+import {getDatabase,ref,onValue} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js';
 const firebaseConfig={apiKey:"AIzaSyCWBwb-lmErQ2Yb3C8uFR6uHzCmaWcFJ0A",authDomain:"foundry-department-dashboard.firebaseapp.com",databaseURL:"https://foundry-department-dashboard-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"foundry-department-dashboard",storageBucket:"foundry-department-dashboard.firebasestorage.app",messagingSenderId:"875228967719",appId:"1:875228967719:web:b5e96a39a706ba0dbd2f02"};
-const MANAGEMENT_UID='jQoHH8MYHtf8AB9SWjYNn1RJvCN2';const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getDatabase(app),$=id=>document.getElementById(id);const depts=[{key:'foundry',name:'Foundry',cls:'foundry',icon:'▥',page:'department-review.html?dept=foundry'},{key:'maintenance',name:'Maintenance',cls:'maintenance',icon:'⚒',page:'department-review.html?dept=maintenance'},{key:'quality',name:'Quality',cls:'quality',icon:'✓',page:'department-review.html?dept=quality'},{key:'heat-treatment',name:'Heat Treatment',cls:'heat',icon:'♨',page:'department-review.html?dept=heat-treatment'}];
-function normalizeData(data){
-  const source = data?.tasks;
-  const rawTasks = Array.isArray(source) ? source
-    : (source && typeof source === 'object' ? Object.values(source) : []);
-  const saved = data?.pct && typeof data.pct === 'object' ? data.pct
-    : (data?.progress && typeof data.progress === 'object' ? data.progress : {});
-  const progress = new Map();
-  for (const [rawKey, rawValue] of Object.entries(saved)) {
-    const key = String(rawKey).replaceAll('_','.');
-    const value = Number(rawValue);
-    if (Number.isFinite(value)) {
-      progress.set(key, Math.max(0, Math.min(100, value)));
-      progress.set(key.replaceAll('.','_'), Math.max(0, Math.min(100, value)));
-    }
-  }
-  return rawTasks.filter(t => t && (typeof t === 'object' || Array.isArray(t))).map((raw, i) => {
-    const isArray = Array.isArray(raw);
-    const id = String(isArray ? (raw[0] ?? i+1) : (raw.id ?? raw.taskId ?? raw.key ?? i+1));
-    const task = isArray
-      ? {id, t:raw[1] ?? '', o:raw[2] ?? '', s:raw[3] ?? 0, f:raw[4] ?? 0, g:id.split('.')[0]}
-      : {...raw, id};
-    const key2 = id.replaceAll('.','_');
-    const mapped = progress.has(id) ? progress.get(id) : progress.get(key2);
-    const direct = Number(task.p ?? task.progress ?? task.pct ?? 0);
-    task.p = mapped !== undefined ? mapped : (Number.isFinite(direct) ? Math.max(0,Math.min(100,direct)) : 0);
-    return task;
-  });
+const MANAGEMENT_UID='jQoHH8MYHtf8AB9SWjYNn1RJvCN2',app=initializeApp(firebaseConfig),auth=getAuth(app),db=getDatabase(app);
+const names={foundry:'Foundry',maintenance:'Maintenance',quality:'Quality','heat-treatment':'Heat Treatment'},params=new URLSearchParams(location.search),dept=(params.get('dept')||params.get('department')||'').trim().toLowerCase(),$=id=>document.getElementById(id);
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const maintenanceGoalTitles={"1": "Implement Overall Equipment Effectiveness (OEE) tracking across the maintenance domain, with full transition to digital OEE data entry in the company's ERP system.", "2": "Develop and deploy a DMMS (Digital Maintenance Management System) framework covering preventive maintenance scheduling, work order tracking, and spare parts management.", "3": "Implement Reliability Centered Maintenance (RCM) methodology across the foundry, achieving at least 50% coverage of assets.", "4": "Improve KPIs i.e. reduce maintenance cost per ton, MTTR, and MTBF by 10% against the FY2025-26 baseline.", "5": "Identify, execute, and close at least 3 improvement projects in maintenance, each with documented cost or efficiency impact.", "6": "Make the recycled greensand cooling system functional.", "7": "Improve the compressed Air lines and reduce the consumption.", "8": "Expand IoT-based condition monitoring by installing and commissioning devices on additional critical assets.", "9": "Achieve 20% implementation of Energy Policy initiatives relevant to maintenance (e.g., compressed air leak reduction, motor efficiency upgrades, insulation improvements).", "10": "Integrate all existing and newly installed IoT devices with ERP system for centralized, real time monitoring and reporting.", "11": "Develop strategy for in-house monitoring (only) for induction furnace outsourced for maintenance"};
+const heatTreatmentGoalTitles={"1":"Develop and implement the OEE Dashboard in the ERP system","2":"Complete shift to ERP data entries for heat treatment","3":"Minimize rejection rate due to heat treatment","4":"Cut energy use (kWh/unit weight) by 5%","5":"Develop full SOP & control base for HT and surface treatment","6":"Prepare & document 10 heat-treatment 8D reports for all major NCs","7":"Train at least one engineer in heat treatment & QC testing","8":"Deliver at least 10 toolbox talks for supervisors & technical staff"};
+function groupGoals(data){
+ const tasks=Array.isArray(data?.tasks)?data.tasks:Object.values(data?.tasks||{});
+ const saved=data?.pct||data?.progress||{},notes=data?.delayNotes||{};
+ const progress={};
+ for(const [k,v] of Object.entries(saved)){
+  const value=Math.max(0,Math.min(100,Number(v)||0)),id=String(k).replaceAll('_','.');
+  progress[id]=value;progress[id.replaceAll('.','_')]=value;
+ }
+ const today=Math.floor(Date.now()/86400000+25569);
+ const map=new Map();
+ for(let i=0;i<tasks.length;i++){
+  const rawTask=tasks[i]||{};
+  // Foundry stores each task as [id, title, owner, startExcelDate, finishExcelDate].
+  // Maintenance stores tasks as objects with id/t/g/s/f/p fields.
+  const isArray=Array.isArray(rawTask);
+  const id=String(isArray?(rawTask[0]??i+1):(rawTask.id??i+1));
+  const taskTitle=String(isArray?(rawTask[1]||('Task '+id)):(rawTask.t||rawTask.title||('Task '+id)));
+  const start=Number(isArray?rawTask[3]:rawTask.s)||0;
+  const finish=Number(isArray?rawTask[4]:rawTask.f)||0;
+  const direct=Number(isArray?0:(rawTask.progress??rawTask.pct??rawTask.p??0));
+  const p=progress[id]??progress[id.replaceAll('.','_')]??Math.max(0,Math.min(100,Number.isFinite(direct)?direct:0));
+  let raw=isArray?id.split('.')[0]:(rawTask.g??rawTask.goalId??rawTask.goal??id.split('.')[0]);
+  if(raw&&typeof raw==='object')raw=raw.id??raw.number??raw.title??'Other';
+  const key=String(raw||'Other').replace(/^goal\s/i,'');
+  let title=String(rawTask.goalTitle??rawTask.goalName??'').trim();
+  if(!title&&!isArray&&typeof rawTask.goal==='string'&&!/^\d+(\.\d+)?$/.test(rawTask.goal))title=rawTask.goal;
+  if(dept==='maintenance'&&maintenanceGoalTitles[key])title=maintenanceGoalTitles[key];
+  if(dept==='heat-treatment'&&heatTreatmentGoalTitles[key])title=heatTreatmentGoalTitles[key];
+  if(!map.has(key))map.set(key,{key,title,tasks:[],values:[],taskCount:0,doneTasks:0,overdueTasks:[],behindTasks:[],blockers:[],plannedWeighted:0,actualWeighted:0,totalWeight:0,latestFinish:0});
+  const g=map.get(key),weight=Math.max(1,(finish||today)-(start||today)+1);
+  const planned=finish?(today<start?0:today>=finish?100:Math.round((today-start)/Math.max(1,finish-start)*100)):0;
+  const note=notes[id]||notes[id.replaceAll('.','_')]||{};
+  const reason=String(typeof note==='string'?note:(note.reason||note.delay||note.note||'')).trim();
+  const action=String(note.action||note.recoveryAction||note.recovery||'').trim();
+  g.tasks.push({id,title:taskTitle,p,finish,planned,reason,action});
+  g.values.push(p);g.taskCount++;if(p>=100)g.doneTasks++;
+  g.totalWeight+=weight;g.actualWeighted+=p*weight;g.plannedWeighted+=planned*weight;
+  if(finish)g.latestFinish=Math.max(g.latestFinish,finish);
+  if(p<100&&finish&&today>finish)g.overdueTasks.push({id,title:taskTitle,finish,reason,action});
+  if(p<100&&planned-p>15)g.behindTasks.push({id,title:taskTitle,planned,p});
+  if(reason)g.blockers.push({id,title:taskTitle,reason,action});
+ }
+ return [...map.values()].map(g=>{
+  g.actualWeighted=g.totalWeight?Math.round(g.actualWeighted/g.totalWeight):0;
+  g.progress=g.actualWeighted;
+  g.plannedWeighted=g.totalWeight?Math.round(g.plannedWeighted/g.totalWeight):0;
+  const dateLabel=excelDate=>excelDate?new Date((excelDate-25569)*86400000).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',timeZone:'UTC'}):'Not set';
+  g.dueDate=dateLabel(g.latestFinish);
+  // Show the due date of the currently active task, rather than repeating the goal progress percentage.
+  const currentTask=g.tasks.filter(t=>t.p>0&&t.p<100&&t.finish).sort((a,b)=>a.finish-b.finish)[0]
+    ||g.tasks.filter(t=>t.p<100&&t.finish).sort((a,b)=>a.finish-b.finish)[0];
+  g.currentTaskDate=currentTask?dateLabel(currentTask.finish):'No open task';
+  if(g.blockers.length){g.status='Blocked';g.statusClass='blocked';}
+  else if(g.overdueTasks.length){g.status='Overdue';g.statusClass='overdue';}
+  else if(g.actualWeighted<g.plannedWeighted-10){g.status='Behind plan';g.statusClass='risk';}
+  else {g.status='On track';g.statusClass='track';}
+  return g;
+ }).sort((a,b)=>String(a.key).localeCompare(String(b.key),undefined,{numeric:true}));
 }
-function goalGroups(data){
-  const tasks=normalizeData(data), groups=new Map();
-  const today=Math.floor(Date.now()/86400000+25569);
-  for(const t of tasks){
-    let raw=t.g??t.goalId??t.goal??String(t.id).split('.')[0];
-    if(raw&&typeof raw==='object')raw=raw.id??raw.number??raw.title??'';
-    const key=String(raw||'Other').replace(/^goal\s/i,'');
-    const title=String(t.goalTitle??t.goalName??(typeof t.goal==='string'&&!/^\d+(\.\d+)?$/.test(t.goal)?t.goal:'')).trim();
-    if(!groups.has(key))groups.set(key,{key,title,taskCount:0,doneTasks:0,totalWeight:0,weightedProgress:0});
-    const g=groups.get(key);
-    if(!g.title&&title)g.title=title;
-    const start=Number(t.s)||0,finish=Number(t.f)||0;
-    const weight=Math.max(1,(finish||today)-(start||today)+1);
-    g.taskCount++;if(t.p>=100)g.doneTasks++;
-    g.totalWeight+=weight;g.weightedProgress+=t.p*weight;
-  }
-  return [...groups.values()].map(g=>({...g,progress:g.totalWeight?Math.round(g.weightedProgress/g.totalWeight):0}))
-    .sort((a,b)=>String(a.key).localeCompare(String(b.key),undefined,{numeric:true}));
-}
-function summarize(data){const goals=goalGroups(data);return {goals,total:goals.length,done:goals.filter(g=>g.progress>=100).length,avg:goals.length?Math.round(goals.reduce((s,g)=>s+g.progress,0)/goals.length):0,hasData:goals.length>0}}
-$('loginForm').addEventListener('submit',async e=>{e.preventDefault();$('loginBtn').disabled=true;$('loginStatus').textContent='Signing in…';try{await setPersistence(auth,browserLocalPersistence);const c=await signInWithEmailAndPassword(auth,$('email').value.trim(),$('password').value);if(c.user.uid!==MANAGEMENT_UID){await signOut(auth);throw new Error('This account is not authorized for Management review.')}$('loginPanel').style.display='none';$('dashboard').style.display='block';await loadData()}catch(err){$('loginStatus').textContent=err.message==='This account is not authorized for Management review.'?err.message:(err.code==='auth/invalid-credential'?'Email or password is incorrect.':'Sign-in failed. Check the credentials and try again.')}finally{$('loginBtn').disabled=false}});
-let cardsByKey=new Map(), summaries=new Map(), listenersStarted=false;
-function buildCards(){
-  if(cardsByKey.size) return;
-  $('cards').innerHTML='';
-  for(const d of depts){
-    const el=document.createElement('article');el.className='dept '+d.cls;
-    el.innerHTML=`<div class="dept-top"><div><h3>${d.name}</h3><div class="state">Connecting to Firebase…</div></div><div class="dept-icon" aria-hidden="true">${d.icon}</div></div><div class="goal-stat"><strong>—</strong><span>average goal progress</span></div><div class="progress"><i></i></div><div class="nums"><span>Goals achieved: —</span><span>Total goals: —</span></div><a class="btn" href="${d.page}">Explore goal progress <span aria-hidden="true">→</span></a>`;
-    $('cards').appendChild(el);cardsByKey.set(d.key,el);
-  }
-}
-function renderAggregate(){
-  let allGoals=0,allDone=0,weightedProgress=0,reporting=0,errors=0;
-  for(const d of depts){
-    const el=cardsByKey.get(d.key),entry=summaries.get(d.key);
-    if(!entry)continue;
-    if(entry.error){errors++;el.querySelector('.state').textContent='Could not read department data';el.querySelector('.nums').innerHTML='<span>Check Firebase read rules</span>';continue}
-    const s=entry.summary;
-    if(!s||!s.hasData){el.querySelector('.state').textContent=entry.exists?'No goal/task records found':'Awaiting saved department data';el.querySelector('.state').classList.add('waiting');el.querySelector('.nums').innerHTML=`<span>${entry.exists?'Department data is empty':'No saved data yet'}</span>`;el.querySelector('.goal-stat strong').textContent='—';el.querySelector('.progress i').style.width='0%';continue}
-    reporting++;allGoals+=s.total;allDone+=s.done;weightedProgress+=s.avg*s.total;
-    el.querySelector('.state').textContent=`${s.total} goals · ${s.done} achieved`;
-    el.querySelector('.goal-stat strong').textContent=s.avg+'%';
-    el.querySelector('.progress i').style.width=s.avg+'%';
-    el.querySelector('.nums').innerHTML=`<span>Goals achieved: ${s.done}</span><span>Total goals: ${s.total}</span>`;
-  }
-  $('goalsTotal').textContent=allGoals||'—';$('goalsDone').textContent=reporting?allDone:'—';
-  $('goalsAvg').textContent=allGoals?Math.round(weightedProgress/allGoals)+'%':'—';
-  $('deptReporting').textContent=reporting+' / 4';
-  $('dbStatus').textContent=errors?`${errors} department(s) could not be read. Check Firebase Rules for the authorized Management account.`:`Live Firebase updates active · ${reporting} of 4 departments reporting.`;
-}
-function loadData(){
-  if(auth.currentUser?.uid!==MANAGEMENT_UID)return;
-  buildCards();
-  if(listenersStarted)return;
-  listenersStarted=true;
-  for(const d of depts){
-    onValue(ref(db,'departments/'+d.key+'/dashboard'),snap=>{
-      summaries.set(d.key,{exists:snap.exists(),summary:snap.exists()?summarize(snap.val()):null});
-      renderAggregate();
-    },err=>{
-      summaries.set(d.key,{error:true});renderAggregate();
-    });
-  }
-  $('dbStatus').textContent='Connecting to live Firebase department data…';
-}
-$('refresh').addEventListener('click',()=>{
-  if(auth.currentUser?.uid!==MANAGEMENT_UID)return;
-  $('dbStatus').textContent='Refreshing Firebase data…';
-  Promise.all(depts.map(async d=>{
-    try{const snap=await get(ref(db,'departments/'+d.key+'/dashboard'));summaries.set(d.key,{exists:snap.exists(),summary:snap.exists()?summarize(snap.val()):null});}
-    catch(e){summaries.set(d.key,{error:true});}
-  })).then(renderAggregate);
+$('title').textContent=(names[dept]||'Department')+' · Goal Review';
+let reviewUnsubscribe=null;
+onAuthStateChanged(auth,async user=>{
+ if(reviewUnsubscribe){reviewUnsubscribe();reviewUnsubscribe=null;}
+ if(!user||user.uid!==MANAGEMENT_UID){if(user)await signOut(auth);$('content').style.display='none';$('status').textContent='Management sign-in required. Return to Management and sign in first.';return;}
+ if(!names[dept]){$('status').textContent='Unknown department.';return;}
+ $('status').textContent='Connecting to live Firebase data…';
+ reviewUnsubscribe=onValue(ref(db,'departments/'+dept+'/dashboard'),snap=>{
+  if(!snap.exists()){$('content').style.display='none';$('status').textContent='No saved data exists for this department yet.';return;}
+  try{
+   const goals=groupGoals(snap.val()),done=goals.filter(g=>g.progress>=100).length,active=goals.filter(g=>g.progress>0&&g.progress<100).length,avg=goals.length?Math.round(goals.reduce((s,g)=>s+g.progress,0)/goals.length):0;
+   $('goals').textContent=goals.length;$('done').textContent=done;$('avg').textContent=avg+'%';$('active').textContent=active;
+   const blocked=goals.filter(g=>g.blockers.length).length,overdue=goals.filter(g=>g.overdueTasks.length).length,behind=goals.filter(g=>!g.blockers.length&&!g.overdueTasks.length&&g.status==='Behind plan').length,onTrack=goals.filter(g=>g.status==='On track').length;
+   $('riskSummary').innerHTML=`<strong>Management risk overview:</strong> ${blocked} blocked · ${overdue} overdue · ${behind} behind plan · ${onTrack} on track. <span class="muted">“Blocked” is based on a saved delay reason; add a reason in the department dashboard to surface a bottleneck.</span>`;
+   $('goalGrid').innerHTML=goals.map(g=>{
+    const blockerHtml=g.blockers.length?`<div class="riskline"><strong>Bottlenecks / delays</strong><ul>${g.blockers.map(b=>`<li><b>${esc(b.id)} — ${esc(b.title)}:</b> ${esc(b.reason)}${b.action?` <span class="muted">Recovery: ${esc(b.action)}</span>`:''}</li>`).join('')}</ul></div>`:'';
+    const overdueHtml=g.overdueTasks.length?`<div class="riskline"><strong>Overdue tasks (${g.overdueTasks.length})</strong><ul>${g.overdueTasks.slice(0,3).map(t=>`<li>${esc(t.id)} — ${esc(t.title)} (due ${new Date((t.finish-25569)*86400000).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',timeZone:'UTC'})})</li>`).join('')}${g.overdueTasks.length>3?`<li>…and ${g.overdueTasks.length-3} more</li>`:''}</ul></div>`:'';
+    return `<article class="goal"><div class="goal-head"><div><div class="goal-id">Goal ${esc(g.key)}</div><h3>${esc(g.title||('Goal '+g.key))}</h3></div><div class="percent">${g.progress}%</div></div><div class="bar"><i style="width:${g.progress}%"></i></div><div class="goal-foot"><span>${g.doneTasks} / ${g.taskCount} linked tasks completed</span><span class="status-pill ${g.statusClass}">${g.status}</span></div><div class="goal-foot" style="margin-top:8px"><span>Current task last date: ${esc(g.currentTaskDate)}</span><span>Planned by today: ${g.plannedWeighted}%</span><span>Goal Last date: ${esc(g.dueDate)}</span></div>${blockerHtml}${overdueHtml}</article>`;
+   }).join('')||'<div class="empty">No goal/task records are stored for this department yet.</div>';
+   $('content').style.display='block';$('status').textContent='Live data connected · Updates automatically when the department saves changes.';
+  }catch(err){$('status').textContent='Could not process department data: '+(err.message||'Unknown data format');}
+ },err=>{$('status').textContent='Could not load data. Confirm Management read permissions in Firebase Rules. '+(err.code||err.message||'');});
 });
-$('logout').addEventListener('click',async()=>{await signOut(auth);$('dashboard').style.display='none';$('loginPanel').style.display='block';$('password').value='';$('loginStatus').textContent='You have signed out.'});setPersistence(auth,browserLocalPersistence).then(()=>{onAuthStateChanged(auth,user=>{if(user&&user.uid!==MANAGEMENT_UID){signOut(auth).catch(()=>{});return;}if(user&&user.uid===MANAGEMENT_UID){$('loginPanel').style.display='none';$('dashboard').style.display='block';loadData();}else{$('dashboard').style.display='none';$('loginPanel').style.display='block';}});}).catch(err=>{$('loginStatus').textContent='Could not restore sign-in session. Please sign in again.';});
 </script></body></html>
