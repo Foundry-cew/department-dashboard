@@ -64,7 +64,8 @@ function groupGoals(data){
   const currentTask=g.tasks.filter(t=>t.p>0&&t.p<100&&t.finish).sort((a,b)=>a.finish-b.finish)[0]
     ||g.tasks.filter(t=>t.p<100&&t.finish).sort((a,b)=>a.finish-b.finish)[0];
   g.currentTaskDate=currentTask?dateLabel(currentTask.finish):'No open task';
-  if(g.blockers.length){g.status='Blocked';g.statusClass='blocked';}
+  if(g.progress>=100){g.status='Completed';g.statusClass='done';}
+  else if(g.blockers.length){g.status='Blocked';g.statusClass='blocked';}
   else if(g.overdueTasks.length){g.status='Overdue';g.statusClass='overdue';}
   else if(g.actualWeighted<g.plannedWeighted-10){g.status='Behind plan';g.statusClass='risk';}
   else {g.status='On track';g.statusClass='track';}
