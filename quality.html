@@ -231,6 +231,55 @@ function addSaveListeners(){
   });
 }
 
+let loadingUid=null,loadingPromise=null;
+async function handleAuthenticatedUser(user){
+  if(!user){cloudReady=false;showLogin("Sign in with the authorized Quality department account.");return;}
+  currentUser=user;
+  if(user.uid!==QUALITY_UID){
+    cloudReady=false;
+    showLogin("This account is not authorized for Quality.");
+    await signOut(auth).catch(()=>{});
+    return;
+  }
+  // The sign-in handler and auth observer may both call this. Share one load operation.
+  if(loadingUid===user.uid && loadingPromise)return loadingPromise;
+  loadingUid=user.uid;
+  loadingPromise=(async()=>{
+    cloudReady=false;
+    loginStatus.textContent="Loading saved Quality data from Firebase…";
+    try{
+      if(typeof window.exportMaintenanceState!=="function"||
+         typeof window.importMaintenanceState!=="function"||
+         typeof window.maintenanceToCloudSafe!=="function"||
+         typeof window.maintenanceFromCloudSafe!=="function"){
+        throw new Error("Quality dashboard state functions are not ready. Refresh the page and try again.");
+      }
+      const snapshot=await get(qualityRef);
+      if(snapshot.exists()){
+        window.importMaintenanceState(window.maintenanceFromCloudSafe(snapshot.val()));
+      }else{
+        const initialState=window.maintenanceToCloudSafe(window.exportMaintenanceState());
+        await set(qualityRef,initialState);
+        window.importMaintenanceState(window.maintenanceFromCloudSafe(initialState));
+      }
+      cloudReady=true;
+      showApp();
+      loginStatus.textContent="Connected to Firebase · Quality data loaded";
+      addSaveListeners();
+    }catch(err){
+      cloudReady=false;
+      const detail=err?.code==="PERMISSION_DENIED"||/permission_denied|permission denied/i.test(err?.message||"")
+        ? "Firebase denied access. Check the Quality read/write rules for UID 4EioDjM7q6X4oF47EyS7WK1y5hb2."
+        : (err?.message||"unknown Firebase error");
+      showLogin("Signed in as Quality, but Firebase data loading failed: "+detail);
+    }finally{
+      loadingUid=null;
+      loadingPromise=null;
+    }
+  })();
+  return loadingPromise;
+}
+
 loginForm.addEventListener("submit",async e=>{
   e.preventDefault();
   loginButton.disabled=true;
@@ -245,7 +294,8 @@ loginForm.addEventListener("submit",async e=>{
       await signOut(auth);
       throw new Error("This account is not authorized for Quality.");
     }
-    loginStatus.textContent="Login successful. Loading saved Quality data…";
+    // Load directly after successful sign-in; do not depend solely on observer timing.
+    await handleAuthenticatedUser(credential.user);
   }catch(err){
     loginStatus.textContent=err.message.includes("not authorized")
       ?err.message
@@ -257,49 +307,13 @@ loginForm.addEventListener("submit",async e=>{
 
 await setPersistence(auth,inMemoryPersistence);
 await signOut(auth).catch(()=>{});
-onAuthStateChanged(auth,async user=>{
-  currentUser=user;
-  cloudReady=false;
+onAuthStateChanged(auth,user=>{
   if(!user){
+    currentUser=null;
+    cloudReady=false;
     showLogin("Sign in with the authorized Quality department account.");
     return;
   }
-  if(user.uid!==QUALITY_UID){
-    showLogin("This account is not authorized for Quality.");
-    await signOut(auth).catch(()=>{});
-    return;
-  }
-  loginStatus.textContent="Loading saved Quality data from Firebase…";
-  try{
-    if(typeof window.exportMaintenanceState!=="function"||
-       typeof window.importMaintenanceState!=="function"||
-       typeof window.maintenanceToCloudSafe!=="function"||
-       typeof window.maintenanceFromCloudSafe!=="function"){
-      throw new Error("Quality dashboard state functions are not ready. Refresh the page and try again.");
-    }
-    const snapshot=await get(qualityRef);
-    if(snapshot.exists()){
-      // Always prefer the existing Firebase record so saved Quality progress/tasks are preserved.
-      window.importMaintenanceState(window.maintenanceFromCloudSafe(snapshot.val()));
-    } else {
-      // Only create the initial record when the exact Quality path is empty; never overwrite an existing record.
-      const initialState=window.maintenanceToCloudSafe(window.exportMaintenanceState());
-      await set(qualityRef,initialState);
-      window.importMaintenanceState(window.maintenanceFromCloudSafe(initialState));
-    }
-    cloudReady=true;
-    showApp();
-    loginStatus.textContent="Connected to Firebase · Quality data loaded";
-    addSaveListeners();
-  }catch(err){
-    cloudReady=false;
-    const detail=err?.code==="PERMISSION_DENIED"||/permission_denied|permission denied/i.test(err?.message||"")
-      ? "Firebase denied access. Add the Quality read/write rules for UID 4EioDjM7q6X4oF47EyS7WK1y5hb2."
-      : (err?.message||"unknown Firebase error");
-    // Keep the authenticated Quality session when the database read fails so the
-    // real database error remains visible instead of being overwritten by the
-    // signed-out observer. Authentication and database authorization are separate.
-    showLogin("Signed in as Quality, but Firebase data loading failed: "+detail);
-  }
+  handleAuthenticatedUser(user);
 });
 </script></body></html>
