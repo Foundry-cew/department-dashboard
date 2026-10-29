@@ -296,8 +296,10 @@ onAuthStateChanged(auth,async user=>{
     const detail=err?.code==="PERMISSION_DENIED"||/permission_denied|permission denied/i.test(err?.message||"")
       ? "Firebase denied access. Add the Quality read/write rules for UID 4EioDjM7q6X4oF47EyS7WK1y5hb2."
       : (err?.message||"unknown Firebase error");
-    showLogin("Quality login succeeded, but data loading failed: "+detail);
-    await signOut(auth).catch(()=>{});
+    // Keep the authenticated Quality session when the database read fails so the
+    // real database error remains visible instead of being overwritten by the
+    // signed-out observer. Authentication and database authorization are separate.
+    showLogin("Signed in as Quality, but Firebase data loading failed: "+detail);
   }
 });
 </script></body></html>
