@@ -227,11 +227,14 @@ function queueQualityCloudSave(){
 function addSaveListeners(){
   if(saveListenerAdded)return;
   saveListenerAdded=true;
-  document.addEventListener("change",e=>{
-    if(cloudReady&&e.target.closest("#maintenanceApp"))queueQualityCloudSave();
-  });
-  document.addEventListener("click",e=>{
-    if(cloudReady&&e.target.closest("#maintenanceApp"))queueQualityCloudSave();
+  // Capture before dashboard handlers re-render/remove the clicked element.
+  // The debounced write runs after the handler has updated the state.
+  const scheduleIfDashboardEvent=e=>{
+    const appRoot=document.getElementById("maintenanceApp");
+    if(cloudReady&&appRoot&&(appRoot.contains(e.target)||e.target===appRoot))queueQualityCloudSave();
+  };
+  ["click","change","input","submit"].forEach(type=>{
+    document.addEventListener(type,scheduleIfDashboardEvent,true);
   });
 }
 
