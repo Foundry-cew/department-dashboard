@@ -182,43 +182,114 @@ window.dispatchEvent(new Event("qualityDashboardStateReady"));
 import {initializeApp} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut,setPersistence,inMemoryPersistence} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 import {getDatabase,ref,get,set} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
-const config={apiKey:"AIzaSyCWBwb-lmErQ2Yb3C8uFR6uHzCmaWcFJ0A",authDomain:"foundry-department-dashboard.firebaseapp.com",databaseURL:"https://foundry-department-dashboard-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"foundry-department-dashboard",storageBucket:"foundry-department-dashboard.firebasestorage.app",messagingSenderId:"875228967719",appId:"1:875228967719:web:b5e96a39a706ba0dbd2f02"};
-const UID="4EioDjM7q6X4oF47EyS7WK1y5hb2",app=initializeApp(config),auth=getAuth(app),db=getDatabase(app),path=ref(db,"departments/quality/dashboard");
-if(typeof window.exportMaintenanceState!=="function"){await new Promise(resolve=>window.addEventListener("qualityDashboardStateReady",resolve,{once:true}));}
-if(typeof window.exportMaintenanceState!=="function"||typeof window.importMaintenanceState!=="function"||typeof window.maintenanceToCloudSafe!=="function"||typeof window.maintenanceFromCloudSafe!=="function"){throw new Error("Quality dashboard state functions failed to initialize. Reload the page.");}
-await setPersistence(auth,inMemoryPersistence);await signOut(auth).catch(()=>{});let ready=false;const $=id=>document.getElementById(id);
-$("loginForm").addEventListener("submit",async e=>{e.preventDefault();$("loginButton").disabled=true;$("loginStatus").textContent="Signing in…";try{const c=await signInWithEmailAndPassword(auth,$("loginEmail").value.trim(),$("loginPassword").value);if(c.user.uid!==UID){await signOut(auth);throw Error("This account is not authorized for Quality.")}}catch(err){$("loginStatus").textContent=err.message.includes("not authorized")?err.message:"Sign-in failed. Check the email and password."}finally{$("loginButton").disabled=false}});
-let saveHandlersInstalled=false;
+
+const config={
+  apiKey:"AIzaSyCWBwb-lmErQ2Yb3C8uFR6uHzCmaWcFJ0A",
+  authDomain:"foundry-department-dashboard.firebaseapp.com",
+  databaseURL:"https://foundry-department-dashboard-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"foundry-department-dashboard",
+  storageBucket:"foundry-department-dashboard.firebasestorage.app",
+  messagingSenderId:"875228967719",
+  appId:"1:875228967719:web:b5e96a39a706ba0dbd2f02"
+};
+const QUALITY_UID="4EioDjM7q6X4oF47EyS7WK1y5hb2";
+const app=initializeApp(config),auth=getAuth(app),db=getDatabase(app);
+const qualityRef=ref(db,"departments/quality/dashboard");
+const $=id=>document.getElementById(id);
+const loginForm=$("loginForm"),loginStatus=$("loginStatus"),loginButton=$("loginButton");
+let cloudReady=false,currentUser=null,saveTimer=null,saveListenerAdded=false;
+
+function showLogin(message){
+  $("maintenanceApp").style.display="none";
+  $("loginPanel").style.display="block";
+  if(message)loginStatus.textContent=message;
+}
+function showApp(){
+  $("loginPanel").style.display="none";
+  $("maintenanceApp").style.display="block";
+}
+function queueQualityCloudSave(){
+  if(!cloudReady||!currentUser||currentUser.uid!==QUALITY_UID)return;
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(async()=>{
+    try{
+      await set(qualityRef,window.maintenanceToCloudSafe(window.exportMaintenanceState()));
+      loginStatus.textContent="Connected to Firebase · Quality data saved online";
+    }catch(err){
+      loginStatus.textContent="Firebase save failed: "+(err?.message||"check Quality database rules");
+    }
+  },700);
+}
+function addSaveListeners(){
+  if(saveListenerAdded)return;
+  saveListenerAdded=true;
+  document.addEventListener("change",e=>{
+    if(cloudReady&&e.target.closest("#maintenanceApp"))queueQualityCloudSave();
+  });
+  document.addEventListener("click",e=>{
+    if(cloudReady&&e.target.closest("#maintenanceApp"))queueQualityCloudSave();
+  });
+}
+
+loginForm.addEventListener("submit",async e=>{
+  e.preventDefault();
+  loginButton.disabled=true;
+  loginStatus.textContent="Signing in…";
+  try{
+    const credential=await signInWithEmailAndPassword(
+      auth,
+      $("loginEmail").value.trim(),
+      $("loginPassword").value
+    );
+    if(credential.user.uid!==QUALITY_UID){
+      await signOut(auth);
+      throw new Error("This account is not authorized for Quality.");
+    }
+    loginStatus.textContent="Login successful. Loading saved Quality data…";
+  }catch(err){
+    loginStatus.textContent=err.message.includes("not authorized")
+      ?err.message
+      :"Sign-in failed: "+(err?.code==="auth/invalid-credential"?"Email or password is incorrect.":(err?.message||"Please check your credentials."));
+  }finally{
+    loginButton.disabled=false;
+  }
+});
+
+await setPersistence(auth,inMemoryPersistence);
+await signOut(auth).catch(()=>{});
 onAuthStateChanged(auth,async user=>{
- ready=false;
- if(!user){$("maintenanceApp").style.display="none";$("loginPanel").style.display="block";return;}
- if(user.uid!==UID){await signOut(auth);return;}
- $("loginStatus").textContent="Loading saved Quality data…";
- try{
-   const snap=await get(path);
-   if(!snap.exists()){
-     const initial=window.maintenanceToCloudSafe(window.exportMaintenanceState());
-     await set(path,initial);
-     window.importMaintenanceState(initial);
-   }else{
-     window.importMaintenanceState(window.maintenanceFromCloudSafe(snap.val()));
-   }
-   ready=true;
-   $("loginPanel").style.display="none";
-   $("maintenanceApp").style.display="block";
-   if(!saveHandlersInstalled){
-     window.queueMaintenanceSave=async()=>{if(!ready)return;try{await set(path,window.maintenanceToCloudSafe(window.exportMaintenanceState()));$("loginStatus").textContent="Connected to Firebase";}catch(err){$("loginStatus").textContent="Firebase save failed: "+(err.code||err.message||"check database rules");}};
-     document.addEventListener("change",e=>{if(ready&&e.target.closest("#maintenanceApp"))window.queueMaintenanceSave()});
-     document.addEventListener("click",e=>{if(ready&&e.target.closest("#maintenanceApp"))setTimeout(()=>window.queueMaintenanceSave(),150)});
-     saveHandlersInstalled=true;
-   }
-   $("loginStatus").textContent="Connected to Firebase";
- }catch(err){
-   ready=false;
-   $("maintenanceApp").style.display="none";
-   $("loginPanel").style.display="block";
-   $("loginStatus").textContent="Could not load Quality dashboard: "+(err.code||err.message||"unknown error");
-   console.error("Quality dashboard load failed",err);
- }
+  currentUser=user;
+  cloudReady=false;
+  if(!user){
+    showLogin("Sign in with the authorized Quality department account.");
+    return;
+  }
+  if(user.uid!==QUALITY_UID){
+    showLogin("This account is not authorized for Quality.");
+    await signOut(auth).catch(()=>{});
+    return;
+  }
+  loginStatus.textContent="Loading saved Quality data from Firebase…";
+  try{
+    if(typeof window.exportMaintenanceState!=="function"||
+       typeof window.importMaintenanceState!=="function"||
+       typeof window.maintenanceToCloudSafe!=="function"||
+       typeof window.maintenanceFromCloudSafe!=="function"){
+      throw new Error("Quality dashboard state functions are not ready. Refresh the page and try again.");
+    }
+    const snapshot=await get(qualityRef);
+    if(!snapshot.exists()){
+      throw new Error("No saved Quality data exists at departments/quality/dashboard. No default data was uploaded or overwritten.");
+    }
+    window.importMaintenanceState(window.maintenanceFromCloudSafe(snapshot.val()));
+    cloudReady=true;
+    showApp();
+    loginStatus.textContent="Connected to Firebase · Quality data loaded";
+    addSaveListeners();
+  }catch(err){
+    cloudReady=false;
+    showLogin("Quality login succeeded, but data loading failed: "+(err?.message||"unknown Firebase error"));
+    await signOut(auth).catch(()=>{});
+  }
 });
 </script></body></html>
