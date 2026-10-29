@@ -102,6 +102,7 @@ const asOf=()=>Date.parse($("asof").value||new Date().toLocaleDateString("en-CA"
 const fmt=s=>new Date((s-25569)*864e5).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"2-digit",timeZone:"UTC"});
 const plan=(t,d)=>d<t.s?0:d>=t.f?100:Math.round((d-t.s)/(t.f-t.s)*100);
 const stat=(t,d)=>P(t)>=100?"done":d>t.f?"overdue":(P(t)>0||d>=t.s)?"active":"later";
+const ST={done:["Completed","var(--done)"],active:["In progress","var(--active)"],overdue:["Overdue","var(--over)"],later:["Not started","var(--later)"]};
 const wt=t=>Math.max(1,t.f-t.s+1),wavg=(list,fn)=>{let w=list.reduce((a,t)=>a+wt(t),0);return w?list.reduce((a,t)=>a+fn(t)*wt(t),0)/w:0};
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(pct))}catch(e){}};
 const OWNER_ROSTER = [
